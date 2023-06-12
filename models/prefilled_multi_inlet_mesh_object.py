@@ -5,6 +5,10 @@ Edits:
     Jan 17 2023: Reworked to generate cell_to_interface mapping as list of lists.
 """
 class MultiInlet1DMeshObject():
+    __slots__ = ["cell_array", "interface_array", "map_cell_id_to_west_interface_idx", \
+                    "map_cell_id_to_east_interface_idx", "map_interface_id_to_west_cell_idx", \
+                    "map_interface_id_to_east_cell_idx", "component_labels", "boundary_conditions", \
+                    "boundary_interface_ids", "cell_idx_to_track", "interface_idx_to_track"]
     def __init__(self, n_cells, n_inlets, reverse_direction_for_mirrored_flow = False) -> None:
         """
         reverse_direction = False -> multiple inlets are on west edge of block

@@ -7,13 +7,13 @@ import os
 import re
 import numpy as np
 
-from Algorithms.DT_1D_V4.post_processing.data_file_to_structured_data import GenerateDataObject
-from Algorithms.DT_1D_V4.post_processing.cell_data_file_to_object import FormCellDataFromFile
-from Algorithms.DT_1D_V4.post_processing.interface_data_file_to_object \
+from Algorithms.DT_1D_V5.post_processing.data_file_to_structured_data import GenerateDataObject
+from Algorithms.DT_1D_V5.post_processing.cell_data_file_to_object import FormCellDataFromFile
+from Algorithms.DT_1D_V5.post_processing.interface_data_file_to_object \
             import FormInterfaceDataFromFile
-from Algorithms.DT_1D_V4.post_processing.process_eilmer_data import ProcessEilmerData
-from Algorithms.DT_1D_V4.post_processing.SI_units_dictionary import SI_UNITS
-from Algorithms.DT_1D_V4.post_processing.symbols import SYMBOLS
+from Algorithms.DT_1D_V5.post_processing.process_eilmer_data import ProcessEilmerData
+from Algorithms.DT_1D_V5.post_processing.SI_units_dictionary import SI_UNITS
+from Algorithms.DT_1D_V5.post_processing.symbols import SYMBOLS
 
 from Algorithms.DT_0D_V2.post_processing.interface_data_file_to_object \
             import FormInterfaceDataFromFile as interface_data_object_0d
@@ -843,7 +843,7 @@ class GenerateCustomSpatialPlotsFromMultipleSims():
                                 marker = ".")
             
             plt.title("Spatial convergence of " + SYMBOLS[var] + " against " + convergence_parameter)
-            plt.ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
+            plt.ylabel("(" + SI_UNITS[var] +")", \
                         rotation = "horizontal", ha = "right")
             plt.xlabel("Position (m)")
             plt.legend()

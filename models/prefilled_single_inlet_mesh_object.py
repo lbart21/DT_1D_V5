@@ -13,6 +13,10 @@ class SingleInlet1DMeshObject():
     boundary cell generation where west boundary ghost cell layers are generated
     in reverse order.
     """
+    __slots__ = ["cell_array", "interface_array", "map_cell_id_to_west_interface_idx", \
+                    "map_cell_id_to_east_interface_idx", "map_interface_id_to_west_cell_idx", \
+                    "map_interface_id_to_east_cell_idx", "component_labels", "boundary_conditions", \
+                    "boundary_interface_ids", "cell_idx_to_track", "interface_idx_to_track"]
     def __init__(self, n_cells, reverse_direction_for_ghost_cells = False) -> None:
         self.cell_array = [None] * n_cells
         self.interface_array = [None] * (n_cells + 1)

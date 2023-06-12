@@ -3,20 +3,37 @@ Function:
 Author: Luke Bartholomew
 Edits:
 """
-from Algorithms.DT_1D_V4.solver.write_to_data_file import write_to_data_file
-from Algorithms.DT_1D_V4.solver.write_cell_data_to_file import write_cell_data_to_file
-from Algorithms.DT_1D_V4.solver.write_interface_data_to_file import write_interface_data_to_file
-from Algorithms.DT_1D_V4.integrate.integrate import Integrate
+from Algorithms.DT_1D_V5.solver.write_to_data_file import write_to_data_file
+from Algorithms.DT_1D_V5.solver.write_cell_data_to_file import write_cell_data_to_file
+from Algorithms.DT_1D_V5.solver.write_interface_data_to_file import write_interface_data_to_file
+from Algorithms.DT_1D_V5.integrate.integrate import Integrate
 
 class Solver():
     def __init__(self, mesh_object, cfl_flag, t_final, data_save_dt, transient_cell_flow_property_variables_to_write, \
-                        transient_interface_flow_property_variables_to_write, sim_number, \
-                        spatial_cell_flow_property_variables_to_write, rapid_data_save_steps, \
-                        simulation_description) -> None:
+                        restart_flag, transient_interface_flow_property_variables_to_write, \
+                        sim_number, spatial_cell_flow_property_variables_to_write, \
+                        rapid_data_save_steps, simulation_description) -> None:
         """
-        meshObject = object with attributes: cell_array, interface_array, map_cell_id_to_west_interface_idx, 
+        meshObject = object with attributes: cell_array, interface_array, 
+                                                map_cell_id_to_west_interface_idx, 
+                                                map_cell_id_to_east_interface_idx,
+                                                map_interface_id_to_west_cell_idx,
+                                                map_interface_id_to_east_cell_idx,
+                                                boundary_conditions,
+                                                boundary_interface_ids,
+                                                component_labels,
+                                                cell_idx_to_track,
+                                                interface_idx_to_track
         cfl_flag = [Bool, float]
-        labels = 
+        t_final = 
+        data_save_dt = 
+        transient_cell_flow_property_variables_to_write = 
+        transient_interface_flow_property_variables_to_write = 
+        spatial_cell_flow_property_variables_to_write = 
+        sim_number = 
+        restart_flag = 
+        rapid_data_save_steps = 
+        simulation_description = 
         """
         t_current = 0.0
         write_to_data_file(cell_array = mesh_object.cell_array, time = t_current, labels = mesh_object.component_labels, \

@@ -7,8 +7,8 @@ import math as m
 
 from copy import deepcopy
 
-from Algorithms.DT_1D_V4.extras.join_blocks import JointBlock
-from Algorithms.DT_1D_V4.boundary_conditions.form_boundary_condition_information import FormBoundaryConditionInformation
+from Algorithms.DT_1D_V5.extras.join_blocks import JointBlock
+from Algorithms.DT_1D_V5.boundary_conditions.form_boundary_condition_information import FormBoundaryConditionInformation
 class Integrate():
     def __init__(self, mesh, cfl_flag, t_current, current_step) -> None:
         """

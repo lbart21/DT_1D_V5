@@ -3,17 +3,19 @@ Function:
 Author: Luke Bartholomew
 Edits:
 """
-import numpy as np
+from numpy import array
 class SinglePhaseMultiSpeciesFixedFluxInterface():
-    def __init__(self, interface_id, flow_state, on_west_boundary, multi_species) -> None:
+    __slots__ = ["interface_id", "flux_flag", "on_west_boundary", "lft_state", \
+                    "fluxes_been_calculated", "boundary_fluxes", "geo"]
+    
+    def __init__(self, interface_id, flow_state, on_west_boundary) -> None:
         self.interface_id = interface_id
         self.flux_flag = True
         self.on_west_boundary = on_west_boundary
-        self.flow_state = flow_state
+        self.lft_state = flow_state #patch name to allow multi-species data extraction without throwing errors
         self.fluxes_been_calculated = False 
-        self.multi_species = multi_species
-
         self.boundary_fluxes = {}
+        self.geo = {}
         
     def fill_geometry(self, geometry):
         self.geo = geometry
@@ -40,9 +42,8 @@ class SinglePhaseMultiSpeciesFixedFluxInterface():
             east_cell.cqs["xMom"] += dt_inv * self.geo["A"] * self.boundary_fluxes["xMom"] / east_cell.geo["dV"]
             east_cell.cqs["xMom"] += dt_inv * east_cell.geo["A_c"] * self.boundary_fluxes["p"] / east_cell.geo["dV"]
             east_cell.cqs["energy"] += dt_inv * self.geo["A"] * self.boundary_fluxes["energy"] / east_cell.geo["dV"]
-            if self.multi_species:
-                for ind in range(len(self.boundary_fluxes["massf"])):
-                    east_cell.cqs["spcs_mass"][ind] += dt_inv * self.geo["A"] * self.boundary_fluxes["massf"][ind] / east_cell.geo["dV"]
+            for ind in range(len(self.boundary_fluxes["massf"])):
+                east_cell.cqs["spcs_mass"][ind] += dt_inv * self.geo["A"] * self.boundary_fluxes["massf"][ind] / east_cell.geo["dV"]
             
         else: # On east boundary, so only want to update cqs in cell to the west
             west_cell = cell_array[map_interface_id_to_west_cell_idx[self.interface_id]]
@@ -50,16 +51,16 @@ class SinglePhaseMultiSpeciesFixedFluxInterface():
             west_cell.cqs["xMom"] -= dt_inv * self.geo["A"] * self.boundary_fluxes["xMom"] / west_cell.geo["dV"]
             west_cell.cqs["xMom"] -= dt_inv * west_cell.geo["A_c"] * self.boundary_fluxes["p"] / west_cell.geo["dV"]
             west_cell.cqs["energy"] -= dt_inv * self.geo["A"] * self.boundary_fluxes["energy"] / west_cell.geo["dV"]
-            if self.multi_species:
-                for ind in range(len(self.boundary_fluxes["massf"])):
-                    west_cell.cqs["spcs_mass"][ind] -= dt_inv * self.geo["A"] * self.boundary_fluxes["massf"][ind] / west_cell.geo["dV"]
+
+            for ind in range(len(self.boundary_fluxes["massf"])):
+                west_cell.cqs["spcs_mass"][ind] -= dt_inv * self.geo["A"] * self.boundary_fluxes["massf"][ind] / west_cell.geo["dV"]
             
     def calculate_fluxes(self):
-        rho = self.flow_state.fluid_state.rho
-        vel_x = self.flow_state.vel_x
-        u = self.flow_state.fluid_state.u
-        p = self.flow_state.fluid_state.p
-        a = self.flow_state.fluid_state.a
+        rho = self.lft_state.fluid_state.rho
+        vel_x = self.lft_state.vel_x
+        u = self.lft_state.fluid_state.u
+        p = self.lft_state.fluid_state.p
+        a = self.lft_state.fluid_state.a
         h_t = u + p / rho + 0.5 * vel_x ** 2.0
 
         self.boundary_fluxes["mass"] = vel_x * rho
@@ -69,9 +70,8 @@ class SinglePhaseMultiSpeciesFixedFluxInterface():
         self.boundary_fluxes["vel_x"] = vel_x
         self.boundary_fluxes["Ma"] = vel_x / a
 
-        if self.multi_species:
-            massf = self.flow_state.fluid_state.massf
-            self.boundary_fluxes["massf"] = (vel_x * np.array(massf) * rho).tolist()
+        massf = self.lft_state.fluid_state.massf
+        self.boundary_fluxes["massf"] = (vel_x * array(massf) * rho).tolist()
 
         self.fluxes_been_calculated = True
         

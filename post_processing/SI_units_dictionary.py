@@ -162,6 +162,7 @@ SI_UNITS = {
 
     "mass_flux"                 : r'$kgs^{-1}$',
     "energy_flux"               : r'$Js^{-1}$',
+    "xMom_flux"                 : r'$kgms^{-2}$',
 
     "A"                         : r'$m^{2}$',
 

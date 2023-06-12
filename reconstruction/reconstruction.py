@@ -4,7 +4,7 @@ Author: Luke Bartholomew
 Edits:
 """
 import math as m
-from Algorithms.DT_1D_V4.reconstruction.limiters import get_limiter
+from Algorithms.DT_1D_V5.reconstruction.limiters import get_limiter
 
 def recon_eilmer_L3R3(limiter, qL_stencil, dxL_stencil, qR_stencil, dxR_stencil):
     [q_L0, q_L1, q_L2] = qL_stencil
@@ -153,14 +153,8 @@ def recon_eilmer_L1R1(qL_stencil, dxL_stencil, qR_stencil, dxR_stencil):
 def clip_to_bounds(q_L0, q_R0, lft, rght):
         q_min = min(q_L0, q_R0)
         q_max = max(q_L0, q_R0)
-        if lft < q_min:
-            lft = q_min
-        elif lft > q_max:
-            lft = q_max
-        if rght < q_min:
-            rght = q_min
-        elif rght > q_max:
-            rght = q_max
+        lft = max(min(lft, q_max), q_min)
+        rght = max(min(rght, q_max), q_min)
         return lft, rght
 
 def get_reconstruction(reconstruction, limiter, qL_stencil, dxL_stencil, qR_stencil, dxR_stencil):

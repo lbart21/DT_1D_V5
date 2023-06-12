@@ -10,7 +10,7 @@ def generate_spatially_varying_goal_massf_for_bulk_reaction(profile, reaction, x
     goal_massf_data = [None] * n_cells
 
     if profile[0] == "constant":
-        [_, goal_massf_dict] = profile
+        [_, goal_massf_dict, x_pos_list, L] = profile
         goal_massf_list = [goal_massf_dict] * n_cells #list of dicts
 
     elif profile[0] == "linear":
@@ -21,15 +21,16 @@ def generate_spatially_varying_goal_massf_for_bulk_reaction(profile, reaction, x
         goal_massf_list = [{spcs:goal_massf_lists[ind][cell] for ind, spcs in enumerate(goal_massf_dict_left.keys())} for cell in range(n_cells)]
 
     elif profile[0] == "tanh":
-        [_, goal_massf_dict_left, goal_massf_dict_right, x_pos_list, L, beta, x_mid] = profile
+        [_, goal_massf_dict_left, goal_massf_dict_right, beta, x_mid, x_pos_list, L] = profile
         goal_massf_lists = [None] * len(goal_massf_dict_left.keys())
         for ind, val in enumerate(goal_massf_dict_left.keys()):
             goal_massf_lists[ind] = goal_massf_dict_left[val] + 0.5 * (goal_massf_dict_right[val] - goal_massf_dict_left[val]) * (1.0 + np.tanh(beta * (np.array(x_pos_list) - x_mid) / L))
-
+        goal_massf_list = [{spcs:goal_massf_lists[ind][cell] for ind, spcs in enumerate(goal_massf_dict_left.keys())} for cell in range(n_cells)]
+    
     elif profile[0] == "custom":
-        [_, goal_massf_list] = profile
+        [_, goal_massf_list, x_pos_list, L] = profile
 
     for i in range(n_cells):
-        goal_massf_data[i] = [x, goal_massf_list[i], x, reaction]
+        goal_massf_data[i] = [x, goal_massf_list[i], reaction]
     
     return goal_massf_data

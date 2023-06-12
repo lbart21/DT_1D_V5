@@ -1,13 +1,14 @@
-import numpy as np
+from numpy import zeros, transpose, array, matmul, linalg
 
-def form_goal_massf_solver_matrices(massf_current, bulk_reaction_parameters, molar_masses, species_names):
+
+def form_goal_massf_solver_matrices(bulk_reaction_parameters, molar_masses, species_names):
     [_, specified_massf_dict, bulk_reaction] = bulk_reaction_parameters
     n_sp = len(molar_masses)
     n_constraints = len(bulk_reaction.elements)
 
-    LHS_A = np.zeros((n_sp, n_sp))
-    RHS_A = np.zeros((n_sp, n_sp))
-    source = np.zeros((n_sp, 1))
+    LHS_A = zeros((n_sp, n_sp))
+    RHS_A = zeros((n_sp, n_sp))
+    source = zeros((n_sp, 1))
 
     for row_ind, element in enumerate(bulk_reaction.elements):
         for column_ind, spcs in enumerate(species_names):
@@ -18,7 +19,6 @@ def form_goal_massf_solver_matrices(massf_current, bulk_reaction_parameters, mol
             RHS_A[row_ind, column_ind] = C_i_j / M_i
             LHS_A[row_ind, column_ind] = C_i_j / M_i
     
-
     for row_ind_2, spcs_given in enumerate(specified_massf_dict.keys()):
         column_ind_2 = species_names.index(spcs_given)
         LHS_A[row_ind_2 + n_constraints, column_ind_2] = 1.0
@@ -26,12 +26,11 @@ def form_goal_massf_solver_matrices(massf_current, bulk_reaction_parameters, mol
 
     return LHS_A, RHS_A, source
 
-def goal_massf_solver(massf_current, bulk_reaction_parameters, species_names, \
-                        LHS_A, RHS_A, source):
+def goal_massf_solver(massf_current, LHS_A, RHS_A, source):
 
-    RHS_total = np.matmul(RHS_A, np.transpose(np.array([massf_current]))) + source
+    RHS_total = matmul(RHS_A, transpose(array([massf_current]))) + source
 
-    goal_massf = np.linalg.solve(LHS_A, RHS_total)
-    goal_massf = np.transpose(goal_massf)[0].tolist()
+    goal_massf = linalg.solve(LHS_A, RHS_total)
+    goal_massf = transpose(goal_massf)[0].tolist()
 
     return goal_massf

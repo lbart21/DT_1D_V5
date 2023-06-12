@@ -3,11 +3,13 @@ Function:
 Author: Luke Bartholomew
 Edits:
 """
-import numpy as np
+from numpy import array
 def multi_species_decode_to_primative_properties(cqs):
     rho_tol = 0.1
 
     rho = cqs["mass"]
+    if rho < 0.0:
+        return rho, None, None, None
     d_inv = 1.0 / rho
 
     vel_x = cqs["xMom"] * d_inv
@@ -31,6 +33,6 @@ def multi_species_decode_to_primative_properties(cqs):
         for ind, val in enumerate(cqs["spcs_mass"]):
             cqs["spcs_mass"][ind] *= scale
 
-    massf = (np.array(cqs["spcs_mass"]) * d_inv).tolist()
+    massf = (array(cqs["spcs_mass"]) * d_inv).tolist()
     
     return rho, u, massf, vel_x

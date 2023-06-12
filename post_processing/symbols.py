@@ -151,6 +151,7 @@ SYMBOLS = {
 
     "mass_flux"             : r'$\dot{m}$',
     "energy_flux"           : r'$\dot{m}h_{t}$',
+    "xMom_flux"             : r'$\dot{m}v_x$',
 
     "A"                     : r'$A$',
 

@@ -6,14 +6,14 @@ Edits:
              and optimised by reducing number of repeated loops over arrays
 """
 # pylint: disable = too-many-locals
-from Algorithms.DT_1D_V4.models.empty_mesh_object import EmptyMeshObject
+from Algorithms.DT_1D_V5.models.empty_mesh_object import EmptyMeshObject
 class JointBlock(EmptyMeshObject):
     """
     Take 2 mesh objects and return a joint mesh.
     """
     def __init__(self, mesh_object_1, mesh_object_2, block_1_interface_id_being_replaced, \
                         block_2_interface_id_being_replaced, new_interface, \
-                        adding_ghost_cells_bool = False, new_component_label = None):
+                        adding_ghost_cells_bool = False):
         """
         Given two meshes, makes a joined mesh, including cell array, interface array
         and mapping arrays from cellIDs to interface indicies and vice versa.
@@ -41,7 +41,7 @@ class JointBlock(EmptyMeshObject):
         ### Will need to know how many cells and interfaces are in each mesh
         ncells_mesh_1 = len(mesh_object_1.cell_array)
         ninterfaces_mesh_1 = len(mesh_object_1.interface_array)
-        ncells_mesh_2 = len(mesh_object_2.cell_array)
+        #ncells_mesh_2 = len(mesh_object_2.cell_array)
 
         """
         Update cell locations
@@ -67,31 +67,38 @@ class JointBlock(EmptyMeshObject):
                 mesh_2_boundary_cell_location = mesh_2_boundary_cell.geo["pos_x"]
                 mesh_2_boundary_cell_width = mesh_2_boundary_cell.geo["dx"]
                 for mesh_1_cell in mesh_object_1.cell_array:
-                    if new_component_label is not None:
-                        mesh_1_cell.label = new_component_label
+                    #if new_component_label is not None:
+                        #mesh_1_cell.label = new_component_label
                     mesh_1_cell.geo["pos_x"] += mesh_2_boundary_cell_location + 0.5 * mesh_2_boundary_cell_width
-                if new_component_label is not None:
-                    for mesh_2_cell in mesh_object_2.cell_array:
-                        mesh_2_cell.label = new_component_label
+                mesh_2_boundary_interface_location = mesh_object_2.interface_array[block_2_interface_id_being_replaced].geo["pos_x"]
+                for mesh_1_interface in mesh_object_1.interface_array:
+                    mesh_1_interface.geo["pos_x"] += mesh_2_boundary_interface_location
+                #if new_component_label is not None:
+                    #for mesh_2_cell in mesh_object_2.cell_array:
+                        #mesh_2_cell.label = new_component_label
                 
             elif joining_to_east_edge: #Need to find location of joining block of block1. Need to look west of interface of mesh2.
                 mesh_1_boundary_cell_idx = mesh_object_1.map_interface_id_to_west_cell_idx[block_1_interface_id_being_replaced]
                 mesh_1_boundary_cell = mesh_object_1.cell_array[mesh_1_boundary_cell_idx]
                 mesh_1_boundary_cell_location = mesh_1_boundary_cell.geo["pos_x"]
                 mesh_1_boundary_cell_width = mesh_1_boundary_cell.geo["dx"]
-                if new_component_label is not None:
-                    for mesh_1_cell in mesh_object_1.cell_array:
-                        mesh_1_cell.label = new_component_label
+                #if new_component_label is not None:
+                    #for mesh_1_cell in mesh_object_1.cell_array:
+                        #mesh_1_cell.label = new_component_label
                 for mesh_2_cell in mesh_object_2.cell_array:
                     mesh_2_cell.geo["pos_x"] += mesh_1_boundary_cell_location + 0.5 * mesh_1_boundary_cell_width
-                    mesh_2_cell.label = new_component_label
+                    #mesh_2_cell.label = new_component_label
+                
+                mesh_1_boundary_interface_location = mesh_object_1.interface_array[block_1_interface_id_being_replaced].geo["pos_x"]
+                for mesh_2_interface in mesh_object_2.interface_array:
+                    mesh_2_interface.geo["pos_x"] += mesh_1_boundary_interface_location
                 
             print("Individual meshs' boundary interface indices were: ", mesh_object_1.boundary_interface_ids, " and ", mesh_object_2.boundary_interface_ids)
 
-            if new_component_label is not None:
-                self.component_labels = [new_component_label]
-            else:
-                self.component_labels = mesh_object_1.component_labels + mesh_object_2.component_labels
+            #if new_component_label is not None:
+                #self.component_labels = [new_component_label]
+            #else:
+            self.component_labels = mesh_object_1.component_labels + mesh_object_2.component_labels
 
             mesh_object_1.boundary_interface_ids.remove(block_1_interface_id_being_replaced)
             mesh_object_2.boundary_interface_ids.remove(block_2_interface_id_being_replaced)
@@ -131,8 +138,6 @@ class JointBlock(EmptyMeshObject):
 
             self.cell_idx_to_track = mesh_object_1.cell_idx_to_track
             self.interface_idx_to_track = mesh_object_1.interface_idx_to_track
-            for cell in mesh_object_2.cell_array:
-                cell.interior_cell_flag = False
 
         self.cell_array = mesh_object_1.cell_array + mesh_object_2.cell_array
 
@@ -148,22 +153,10 @@ class JointBlock(EmptyMeshObject):
 
         del mesh_object_2.interface_array[block_2_interface_id_being_replaced]
 
-        if joining_to_west_edge:   
-            for ind, interface in enumerate(mesh_object_1.interface_array):
-                interface.interface_id = ind
-            for ind, interface in enumerate(mesh_object_2.interface_array):
-                interface.interface_id = ind + ninterfaces_mesh_1
-
-        if joining_to_east_edge:   
-            for ind, interface in enumerate(mesh_object_1.interface_array):
-                interface.interface_id = ind
-            for ind, interface in enumerate(mesh_object_2.interface_array):
-                interface.interface_id = ind + ninterfaces_mesh_1
-
         self.interface_array = mesh_object_1.interface_array + mesh_object_2.interface_array
 
         for ind, interface in enumerate(self.interface_array):
-            interface.interface_ID = ind
+            interface.interface_id = ind
 
         # Update values in mesh_object_2.map_cell_id_to_west_interface_idx
         # Join map_cell_id_to_west_interface_idx arrays
