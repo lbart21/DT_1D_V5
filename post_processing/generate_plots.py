@@ -522,7 +522,8 @@ class SingleSpatialPlotsWithMultipleYAxes():
                     formatted_species_name = ''.join(split_name)
                     p_ind = axes[ind1].scatter(self.data_object.component_data["pos_x"], \
                                 self.data_object.component_data[massf_species_names[index]], \
-                                marker = marker_list[marker_location], label = r"$f_{" + formatted_species_name + "}$")
+                                marker = marker_list[marker_location], \
+                                label = r"$f_{" + formatted_species_name + "}$")
                     plot_list.append(p_ind)
                     marker_location += 1
                     axes[ind1].set_ylabel(SYMBOLS[var_list[0]] + " (" + SI_UNITS[var_list[0]] +")", \

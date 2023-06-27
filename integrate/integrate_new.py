@@ -8,11 +8,13 @@ import math as m
 from Algorithms.DT_1D_V5.boundary_conditions.form_boundary_condition_information_new import apply_boundary_conditions
 
 class Integrate():
+    __slots__ = ["dt_total", "mesh", "cfl_used"]
     def __init__(self, mesh, cfl_flag, t_current, current_step) -> None:
         self.dt_total = 1_000_000
+        self.cfl_used = 0.0
         
         ### Add boundary conditions
-        self.mesh = apply_boundary_conditions(mesh = mesh)
+        self.mesh = apply_boundary_conditions(mesh = mesh, t_current = t_current)
 
         ### Find out inviscid flux dt from CFL
         if not cfl_flag[0]: #Using fixed dt, cfl_flag has form [False, float dt_fixed]
@@ -25,6 +27,8 @@ class Integrate():
                 for cell in self.mesh.cell_array:
                     min_dx_over_u = min(min_dx_over_u, cell.max_allowable_dt())
                 self.dt_total = cfl_flag[2] * min_dx_over_u
+                self.cfl_used = cfl_flag[2]
+
             elif cfl_flag[1] == "cfl_ramp_from_tCurrent": 
                 # Ramping cfl based on tCurrent
                 # cfl_flag has form [True, "cfl_ramp_from_tCurrent", [[cfl_1, t_1], [cfl_2, t_2], ..., [cfl_n, t_n]]]
@@ -36,6 +40,7 @@ class Integrate():
                     for cell in self.mesh.cell_array:
                         min_dx_over_u = min(min_dx_over_u, cell.max_allowable_dt())
                     self.dt_total = cfl_max * min_dx_over_u
+                    self.cfl_used = cfl_max
                 else:
                     for cfl_pair in range(len(cfl_flag[2])):
                         if t_current > cfl_flag[2][cfl_pair][1]:
@@ -47,6 +52,7 @@ class Integrate():
                             for cell in self.mesh.cell_array:
                                 min_dx_over_u = min(min_dx_over_u, cell.max_allowable_dt())
                             self.dt_total = cfl_current * min_dx_over_u
+                            self.cfl_used = cfl_current
                             break
                 
             elif cfl_flag[1] == "cfl_ramp_from_step":
@@ -60,6 +66,7 @@ class Integrate():
                     for cell in self.mesh.cell_array:
                         min_dx_over_u = min(min_dx_over_u, cell.max_allowable_dt())
                     self.dt_total = cfl_max * min_dx_over_u
+                    self.cfl_used = cfl_max
                 else:
                     for cfl_pair in range(len(cfl_flag[2])):
                         if current_step > cfl_flag[2][cfl_pair][1]:
@@ -72,6 +79,7 @@ class Integrate():
                             for cell in self.mesh.cell_array:
                                 min_dx_over_u = min(min_dx_over_u, cell.max_allowable_dt())
                             self.dt_total = cfl_current * min_dx_over_u
+                            self.cfl_used = cfl_current
                             break
                 
             elif cfl_flag[1] == "dt_ramp_then_cfl_ramp_from_step":
@@ -95,6 +103,7 @@ class Integrate():
                         for cell in self.mesh.cell_array:
                             min_dx_over_u = min(min_dx_over_u, cell.max_allowable_dt())
                         self.dt_total = cfl_flag[3][-1][0] * min_dx_over_u
+                        self.cfl_used = cfl_flag[3][-1][0]
                         #print("step = ", current_step, " final cfl criteria used, cfl = ", cfl_flag[3][-1][0])
                     else:
                         for cfl_pair in range(len(cfl_flag[3])):
@@ -107,6 +116,7 @@ class Integrate():
                                 for cell in self.mesh.cell_array:
                                     min_dx_over_u = min(min_dx_over_u, cell.max_allowable_dt())
                                 self.dt_total = cfl_current * min_dx_over_u
+                                self.cfl_used = cfl_current
                                 break
 
             elif cfl_flag[1] == "dt_ramp_then_cfl_ramp_from_tCurrent":
@@ -130,6 +140,7 @@ class Integrate():
                         for cell in self.mesh.cell_array:
                             min_dx_over_u = min(min_dx_over_u, cell.max_allowable_dt())
                         self.dt_total = cfl_flag[3][-1][0] * min_dx_over_u
+                        self.cfl_used = cfl_flag[3][-1][0]
                     else:
                         for cfl_pair in range(len(cfl_flag[3])):
                             if t_current > cfl_flag[3][cfl_pair][1]:
@@ -140,6 +151,7 @@ class Integrate():
                                 for cell in self.mesh.cell_array:
                                     min_dx_over_u = min(min_dx_over_u, cell.max_allowable_dt())
                                 self.dt_total = cfl_current * min_dx_over_u
+                                self.cfl_used = cfl_current
                                 break
                             
             else:

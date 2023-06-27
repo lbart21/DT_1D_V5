@@ -119,7 +119,7 @@ class Solver():
             self.t_current += dt
             current_step += 1
             if current_step % n_steps_print == 0:
-                print("t: ", self.t_current, "WCTFT:", (t_final - self.t_current) / dt * (time_counter_end - time_counter_start))
+                print("t: ", self.t_current, "WCTFT:", (t_final - self.t_current) / dt * (time_counter_end - time_counter_start), "CFL:", new_data.cfl_used)
             self.mesh = new_data.mesh
 
             # Check if we've just done the first time step so we should write out the spatial 

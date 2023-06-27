@@ -7,7 +7,7 @@ import os
 def write_spatial_interface_data_to_file(interface_array, sim_number, time, simulation_description, \
                                          interface_property_variables):
     cwd = os.getcwd()
-    file_name = "Sim" + str(sim_number) + "InterfaceDataAt" + str(format(time, ".9f")) + ".txt"
+    file_name = "Sim" + str(sim_number) + "SpatialInterfaceDataAt" + str(format(time, ".9f")) + ".txt"
     with open(cwd + "/data/" + file_name, "w") as file:
         file.write("Sim: " + str(sim_number) + "\n")
         file.write("Time: " + str(time) + "\n")
@@ -18,7 +18,7 @@ def write_spatial_interface_data_to_file(interface_array, sim_number, time, simu
             interface_data = {}
             if "mass_flux" in interface_property_variables:
                 interface_data["mass_flux"] = interface_array[interface_idx].boundary_fluxes["mass"]
-            if "xMom" in interface_property_variables:
+            if "xMom_flux" in interface_property_variables:
                 interface_data["xMom_flux"] = interface_array[interface_idx].boundary_fluxes["xMom"]
             if "energy_flux" in interface_property_variables:
                 interface_data["energy_flux"] = interface_array[interface_idx].boundary_fluxes["energy"]

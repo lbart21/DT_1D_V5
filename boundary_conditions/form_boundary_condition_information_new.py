@@ -12,7 +12,7 @@ from Algorithms.DT_1D_V5.boundary_conditions.supersonic_inflow_bc_new import sup
 from Algorithms.DT_1D_V5.boundary_conditions.wall_no_slip_bc_new import wall_no_slip_bc
 from Algorithms.DT_1D_V5.boundary_conditions.wall_with_slip_bc_new import wall_with_slip_bc
 
-def apply_boundary_conditions(mesh):
+def apply_boundary_conditions(mesh, t_current):
     for bc_ind, bc in enumerate(mesh.boundary_conditions):
         if bc[3][0] == "SimpleOutFlow_BC":
             mesh = simple_outflow_bc(mesh = mesh, bc_ind = bc_ind)
@@ -33,7 +33,7 @@ def apply_boundary_conditions(mesh):
             mesh = from_stagnation_inflow_bc(mesh = mesh, bc_ind = bc_ind)
             
         elif bc[3][0] == "FromStagnationWithMassFlowRateInFlow_BC":
-            mesh = mdot_from_stagnation_inflow_bc(mesh = mesh, bc_ind = bc_ind)
+            mesh = mdot_from_stagnation_inflow_bc(mesh = mesh, bc_ind = bc_ind, t_current = t_current)
             
         elif bc[3][0] == "FixedPOutFlow_BC":
             mesh = fixed_p_outflow_bc(mesh = mesh, bc_ind = bc_ind)

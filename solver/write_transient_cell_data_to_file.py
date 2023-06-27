@@ -7,7 +7,7 @@ import os
 def write_transient_cell_data_to_file(cell, time, flow_property_variables, sim_number, simulation_description):
     cwd = os.getcwd()
     cell_id = cell.cell_id
-    file_name = "Sim" + str(sim_number) + "DataAtCellID" + str(cell_id) + ".txt"
+    file_name = "Sim" + str(sim_number) + "TransientCellDataForCellID" + str(cell_id) + ".txt"
     if not os.path.exists(cwd + "/data/" + file_name):
         with open(cwd + "/data/" + file_name, "w") as file:
             cell_flow_data = {}

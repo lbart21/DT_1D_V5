@@ -7,7 +7,7 @@ import os
 def write_transient_interface_data_to_file(interface, time, flow_property_variables, sim_number, simulation_description):
     cwd = os.getcwd()
     interface_id = interface.interface_id
-    file_name = "Sim" + str(sim_number) + "DataAtInterfaceID" + str(interface_id) + ".txt"
+    file_name = "Sim" + str(sim_number) + "TransientInterfaceDataForInterfaceID" + str(interface_id) + ".txt"
     if not os.path.exists(cwd + "/data/" + file_name):
         with open(cwd + "/data/" + file_name, "w") as file:
             interface_data = {}

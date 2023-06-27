@@ -1,7 +1,7 @@
 from Algorithms.DT_1D_V5.post_processing.process_spatial_cell_data import ProcessSpatialCellData
 
 def generate_cell_data_for_component(component_data_file):
-    detailed_data = ProcessSpatialCellData(data_file_name = component_data_file)
+    detailed_data = ProcessSpatialCellData(spatial_cell_data_file = component_data_file)
     detailed_component_data = detailed_data.component_data
     t_final = detailed_data.t_final
     cell_data = [{} for _ in range(detailed_data.n_cells)]

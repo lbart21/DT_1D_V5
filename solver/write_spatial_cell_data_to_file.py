@@ -9,7 +9,7 @@ def write_spatial_cell_data_to_file(cell_array, time, labels, flow_property_vari
                        boundary_conditions, simulation_description) -> None:
     cwd = os.getcwd()
     for comp_label in labels:
-        file_name = "Sim" + str(sim_number) + "DataAt" + str(format(time, ".9f")) +"ForComponent" + comp_label + ".txt"
+        file_name = "Sim" + str(sim_number) + "SpatialCellDataAt" + str(format(time, ".9f")) +"ForComponent" + comp_label + ".txt"
         file = open(cwd + "/data/" + file_name, "w")
         file.write("Sim: " + str(sim_number) + "\n")
         file.write("Label: " + comp_label + "\n")
