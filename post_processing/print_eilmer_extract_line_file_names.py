@@ -1,3 +1,4 @@
+import os
 def print_eilmer_extract_line_file_names():
     """
     Want to print Eilmer extract file names in order of ascending pos_x
