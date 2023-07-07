@@ -21,6 +21,7 @@ from Algorithms.DT_1D_V5.post_processing.process_transient_interface_data \
         import ProcessTransientInterfaceData
 from Algorithms.DT_1D_V5.post_processing.generate_1D_averaged_data_from_2D_eilmer_data \
         import Averaged2DEilmerDataInto1D
+from Algorithms.DT_1D_V5.post_processing.generate_average_from_eilmer_extract_line import generate_average_from_eilmer_extract
 from Algorithms.MultiDimensionNewton.MultiDimensionNS import NewtonSolver
 
 
@@ -1091,9 +1092,9 @@ def generate_transient_cell_property_plots_with_multiple_y_axes(transient_cell_d
     for plot_num in range(len(plot_vars)):
         num_active_axes = sum(visible_axes[plot_num])
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(15,5))
         axes = [ax] + [ax.twinx() for _ in range(num_active_axes - 1)]
-        fig.set_size_inches(15, 5)
+        #fig.set_size_inches(15, 5)
 
         fig.subplots_adjust(right=0.9 - 0.05 * (num_active_axes - 1))
 
@@ -1244,7 +1245,7 @@ def generate_transient_interface_property_plots_with_multiple_y_axes(\
     for plot_num in range(len(plot_vars)):
         num_active_axes = sum(visible_axes[plot_num])
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(15,5))
         axes = [ax] + [ax.twinx() for _ in range(num_active_axes - 1)]
         fig.set_size_inches(15, 5)
 
@@ -1301,7 +1302,7 @@ def generate_transient_interface_property_plots_with_multiple_y_axes(\
     plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
     plt.close()
 ####################################################################################################
-def generate_1D_averaged_plots_from_eilmer_data(eilmer_cell_data_files, properties, \
+def generate_1D_volume_averaged_plots_from_eilmer_data(eilmer_cell_data_files, properties, \
                                                 pos_x_array, x_tol, plot_vars):
     eilmer_data = Averaged2DEilmerDataInto1D(eilmer_cell_data_files = eilmer_cell_data_files, \
                                              properties = properties, \
@@ -1310,11 +1311,98 @@ def generate_1D_averaged_plots_from_eilmer_data(eilmer_cell_data_files, properti
     current_dir = os.getcwd()
     for var in plot_vars:
         fig, ax = plt.subplots()
-        fig.set_size_inches(15, 5)
-        ax.scatter(eilmer_data.averaged_data["pos_x"], eilmer_data.averaged_data[var])
+        #fig.set_size_inches(15, 5)
+        ax.scatter(eilmer_data.averaged_data["pos_x"], eilmer_data.averaged_data[var], marker = ".")
         ax.set_xlabel("Position (m)")
         ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
                     rotation = "horizontal", ha = "right")
         file_name = "Averaged 1D plot of " + var + " from eilmer simulation.jpg"
+        plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
+        plt.close()
+####################################################################################################
+def generate_1D_area_averaged_plots_from_eilmer_data(eilmer_extract_line_files, plot_vars, n_points, pos_x_array, ymax_array):
+    """
+    - eilmer_extract_line_files: list(str)
+    - plot_vars: list(str)
+    - n_points: int -> number of points to sample along for each x value
+    - pos_x_array: list(float)
+    - ymax_array: list(float)
+    """
+    n_cells = len(pos_x_array)
+    data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
+    for ind, x_val in enumerate(pos_x_array):
+        average_data, min_data, max_data = generate_average_from_eilmer_extract(line_extract_data_file = eilmer_extract_line_files[ind], x = x_val, ymin = 0.0, ymax = ymax_array[ind], n = n_points, extract_vars = plot_vars)
+        for column in plot_vars:
+            data_df[column][ind] = average_data[column]
+    current_dir = os.getcwd()
+    for var in plot_vars:
+        fig, ax = plt.subplots(figsize=(15, 5))
+        ax.scatter(pos_x_array, data_df[var], marker = ".")
+        ax.set_xlabel("Position (m)")
+        ax.set_title("Area Averaged Spatial Distribution of " + SYMBOLS[var])
+        ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
+                    rotation = "horizontal", ha = "right")
+        
+        file_name = "Area averaged spatial distribution of " + var + ".jpg"
+        plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
+        plt.close()
+####################################################################################################
+def compare_1D_simulation_to_area_averaged_eilmer_extract(eilmer_extract_line_files, simulation_files, plot_vars, n_points, add_bounding_lines):
+    """
+    - eilmer_extract_line_files: list(str)
+    - simulation_files: list(str)
+    - plot_vars: list(str)
+    - n_points: int -> number of points to sample along for each x value
+    """
+    data_object = None
+    for component_data_file in simulation_files:
+        data = ProcessSpatialCellData(spatial_cell_data_file = component_data_file)
+        if data_object is None:
+            data_object = data.component_data
+            t_final = data.t_final
+            sim_number = data.sim_number
+        else:
+            data_object = pd.concat([data_object, data.component_data], \
+                                        axis = 0, ignore_index = True)
+    data_object = data_object.sort_values(by = ["pos_x"])
+    pos_x_list = data_object["pos_x"].tolist()
+    ymax_list = ((data_object["A_c"] / np.pi) ** 0.5).tolist()
+    n_cells = data_object.shape[0]
+    ave_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
+    if add_bounding_lines:
+        min_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
+        max_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
+    for ind, x_val in enumerate(pos_x_list):
+        average_data, min_data, max_data = generate_average_from_eilmer_extract(line_extract_data_file = eilmer_extract_line_files[ind], x = x_val, ymin = 0.0, ymax = ymax_list[ind], n = n_points, extract_vars = plot_vars)
+        for column in plot_vars:
+            ave_data_df[column][ind] = average_data[column]
+            if add_bounding_lines:
+                min_data_df[column][ind] = min_data[column]
+                max_data_df[column][ind] = max_data[column]
+    current_dir = os.getcwd()
+    for var in plot_vars:
+        print(var)
+        fig, ax = plt.subplots(figsize=(15, 5))
+        ax.scatter(pos_x_list, ave_data_df[var], marker = ".", label = "2D Average")
+        if var == "vel":
+            ax.scatter(pos_x_list, data_object["vel_x"], marker = ".", label = "1D Simulation")
+        else:
+            ax.scatter(pos_x_list, data_object[var], marker = ".", label = "1D Simulation")
+        if add_bounding_lines:
+            ax.fill_between(pos_x_list, min_data_df[var].tolist(), max_data_df[var].tolist(), alpha=0.2)
+            ax.plot(pos_x_list, min_data_df[var].tolist(), c="k")
+            ax.plot(pos_x_list, max_data_df[var].tolist(), c="k")
+            #ax.scatter(pos_x_list, min_data_df[var], marker = ".", label = "2D Minimum")
+            #ax.scatter(pos_x_list, max_data_df[var], marker = ".", label = "2D Maximum")
+        ax.legend()
+        ax.grid()
+        ax.set_xlabel("Position (m)")
+        ax.set_title("Comparison Between Area Averaged 2D Data and 1D Simulation Result of " + SYMBOLS[var])
+        ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
+                    rotation = "horizontal", ha = "right")
+        if add_bounding_lines:
+            file_name = "Comparison of area averaged to 1D simulation spatial distribution of " + var + " with bounding lines.jpg"
+        else:
+            file_name = "Comparison of area averaged to 1D simulation spatial distribution of " + var + " without bounding lines.jpg"
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
