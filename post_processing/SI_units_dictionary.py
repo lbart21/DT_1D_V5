@@ -58,6 +58,7 @@ SI_UNITS = {
     "vel_z_ave"                 : r'$ms^{-1}$',
 
     "vel_mag"                   : r'$ms^{-1}$', #ms^-1
+    "vel"                       : r'$ms^{-1}$', #ms^-1
     
     "u"                         : r'$Jkg^{-1}$', #Jkg^-1
     "u_G"                       : r'$Jkg^{-1}$',

@@ -12,7 +12,7 @@ class Process2DEilmerData():
             for row_ind, row in enumerate(f):
                 split_row = row.split(": ")
                 if split_row[0] == "sim_time":
-                    self.t_final = split_row[1]
+                    self.t_final = float(split_row[1])
                 elif split_row[0] == "variables":
                     variable_flag = row_ind + 1
                 elif split_row[0] == "nkcell":
@@ -36,7 +36,6 @@ class Process2DEilmerData():
                             variable_names[var_ind] = "vel_y"
                         elif len(var) > 5 and var[:5] == "massf":
                             variable_names[var_ind] = "massf_" + var.split("-")[1]
-                    print(variable_names)
                     
                 elif data_start:
                     data = row[1:].split(' ')

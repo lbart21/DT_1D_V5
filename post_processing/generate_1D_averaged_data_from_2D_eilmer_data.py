@@ -2,7 +2,7 @@ from Algorithms.DT_1D_V5.post_processing.process_2D_eilmer_data import Process2D
 import pandas as pd
 
 class Averaged2DEilmerDataInto1D():
-    __slots__ = ["eilmer_cell_data", "averaged_data"]
+    __slots__ = ["eilmer_cell_data", "averaged_data", "t_final"]
     def __init__(self, eilmer_cell_data_files, properties, pos_x_array, x_tol) -> None:
         """
         - eilmer_cell_data_files: list(str)
@@ -26,6 +26,7 @@ class Averaged2DEilmerDataInto1D():
             eilmer_data_total = Process2DEilmerData(eilmer_data_file = eilmer_cell_data_file)
             if self.eilmer_cell_data is None:
                 self.eilmer_cell_data = eilmer_data_total.cell_data
+                self.t_final = eilmer_data_total.t_final
             else:
                 self.eilmer_cell_data = pd.concat([self.eilmer_cell_data, eilmer_data_total.cell_data], \
                                                 axis = 0, ignore_index = True)
@@ -45,7 +46,18 @@ class Averaged2DEilmerDataInto1D():
 
                 for cell_id in neighbour_cell_ids:
                     if prop == "vel":
-                        pass
+                        vel_x = self.eilmer_cell_data["vel_x"][cell_id]
+                        vel_y = self.eilmer_cell_data["vel_y"][cell_id]
+                        vol_i = self.eilmer_cell_data["volume"][cell_id]
+                        average_prop += (vel_x ** 2.0 + vel_y ** 2.0) ** 0.5 * vol_i
+                        vol += vol_i
+                    elif prop == "Ma":
+                        vel_x = self.eilmer_cell_data["vel_x"][cell_id]
+                        vel_y = self.eilmer_cell_data["vel_y"][cell_id]
+                        a = self.eilmer_cell_data["a"][cell_id]
+                        vol_i = self.eilmer_cell_data["volume"][cell_id]
+                        average_prop += (vel_x ** 2.0 + vel_y ** 2.0) ** 0.5 / a * vol_i
+                        vol += vol_i
                     else:
                         average_prop += self.eilmer_cell_data[prop][cell_id] \
                                         * self.eilmer_cell_data["volume"][cell_id]

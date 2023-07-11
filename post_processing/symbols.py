@@ -56,6 +56,7 @@ SYMBOLS = {
     "vel_z_ave"             : r'$v_{z(ave)}$',
 
     "vel_mag"               : r'$v$',
+    "vel"                   : r'$v$',
 
     "u"                     : r'$u$',
     "u_G"                   : r'$u_{G}$',

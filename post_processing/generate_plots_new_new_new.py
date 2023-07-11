@@ -1307,14 +1307,72 @@ def generate_1D_averaged_plots_from_eilmer_data(eilmer_cell_data_files, properti
                                              properties = properties, \
                                             pos_x_array = pos_x_array, \
                                             x_tol = x_tol)
+    formatted_title_time = f"{eilmer_data.t_final / 1e-6:.3f}"
+    formatted_file_name_time = f"{eilmer_data.t_final:.9f}"
     current_dir = os.getcwd()
     for var in plot_vars:
         fig, ax = plt.subplots()
         fig.set_size_inches(15, 5)
-        ax.scatter(eilmer_data.averaged_data["pos_x"], eilmer_data.averaged_data[var])
+        ax.scatter(eilmer_data.averaged_data["pos_x"], eilmer_data.averaged_data[var], \
+                    marker = ".")
         ax.set_xlabel("Position (m)")
         ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
                     rotation = "horizontal", ha = "right")
-        file_name = "Averaged 1D plot of " + var + " from eilmer simulation.jpg"
+        ax.set_title("Averaged 1D Distribution of " + SYMBOLS[var] + " at t = " \
+                        + formatted_title_time + r"$\mu$" + "s")
+        ax.grid()
+        file_name = "Averaged 1D plot of " + var + " from eilmer simulation at " + \
+                                formatted_file_name_time  + ".jpg"
+        plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
+        plt.close()
+####################################################################################################
+def compare_1D_averaged_eilmer_cell_data_to_simulation_cell_data(spatial_cell_data_files, \
+                                                                    eilmer_cell_data_files, \
+                                                                    plot_vars, x_tol = 5e-3):
+    """
+    
+    """
+    cell_data = None
+    for cell_data_file in spatial_cell_data_files:
+        cell_data_total = ProcessSpatialCellData(spatial_cell_data_file = cell_data_file)
+        if cell_data is None:
+            cell_data = cell_data_total.component_data
+            t_final = cell_data_total.t_final
+            sim_number = cell_data_total.sim_number
+        else:
+            cell_data = pd.concat([cell_data, cell_data_total.component_data], \
+                                axis = 0, ignore_index = True)
+    
+    cell_data = cell_data.sort_values(by = ["pos_x"])
+    pos_x = cell_data["pos_x"].tolist()
+
+    averaged_eilmer_data_total = Averaged2DEilmerDataInto1D(\
+                                            eilmer_cell_data_files = eilmer_cell_data_files, \
+                                            properties = plot_vars, \
+                                            pos_x_array = pos_x, \
+                                            x_tol = x_tol)
+    formatted_title_time = f"{t_final / 1e-6:.3f}"
+    formatted_file_name_time = f"{t_final:.9f}"
+    current_dir = os.getcwd()
+    for var in plot_vars:
+        fig, ax = plt.subplots()
+        fig.set_size_inches(15, 5)
+        if var == "vel":
+            ax.scatter(pos_x, cell_data["vel_x"], marker = ".", label = "1D simulation")
+            ax.scatter(pos_x, averaged_eilmer_data_total.averaged_data[var], marker = ".", \
+                                label = "Eilmer")
+        else:
+            ax.scatter(pos_x, cell_data[var], marker = ".", label = "1D simulation")
+            ax.scatter(pos_x, averaged_eilmer_data_total.averaged_data[var], marker = ".", \
+                                label = "Eilmer")
+        ax.legend()
+        ax.set_xlabel("Position (m)")
+        ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
+                    rotation = "horizontal", ha = "right")
+        ax.set_title("Comparison Between 1D Simulation and Averaged Eilmer Data for " \
+                            + SYMBOLS[var] + " at t = " + formatted_title_time + r"$\mu$" + "s")
+        ax.grid()
+        file_name = "Sim" + str(sim_number) + "Comparing averaged 1D Eilmer data to 1D simulation for " + var + " at " \
+                        + formatted_file_name_time + ".jpg"
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
