@@ -11,6 +11,7 @@ from Algorithms.DT_1D_V5.boundary_conditions.mdot_from_stagnation_inflow_bc_new 
 from Algorithms.DT_1D_V5.boundary_conditions.supersonic_inflow_bc_new import supersonic_inflow_bc
 from Algorithms.DT_1D_V5.boundary_conditions.wall_no_slip_bc_new import wall_no_slip_bc
 from Algorithms.DT_1D_V5.boundary_conditions.wall_with_slip_bc_new import wall_with_slip_bc
+from Algorithms.DT_1D_V5.boundary_conditions.simple_extrapolate_outflow_bc import simple_extrapolate_outflow_bc
 
 def apply_boundary_conditions(mesh, t_current):
     for bc_ind, bc in enumerate(mesh.boundary_conditions):
@@ -18,7 +19,7 @@ def apply_boundary_conditions(mesh, t_current):
             mesh = simple_outflow_bc(mesh = mesh, bc_ind = bc_ind)
 
         elif bc[3][0] == "SimpleExtrapolateOutFlow_BC":
-            print("SimpleExtrapolateOutFlow_BC has not been implemented yet.")
+            mesh = simple_extrapolate_outflow_bc(mesh = mesh, bc_ind = bc_ind)
             
         elif bc[3][0] == "WallNoSlip_BC":
             mesh = wall_no_slip_bc(mesh = mesh, bc_ind = bc_ind)

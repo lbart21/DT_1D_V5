@@ -12,7 +12,7 @@ def mdot_from_stagnation_inflow_bc(mesh, bc_ind, t_current):
     boundary_edge = mesh.boundary_conditions[bc_ind][2]
     gs = mesh.boundary_conditions[bc_ind][3][1]
     mass_flux = mesh.boundary_conditions[bc_ind][3][2]
-    [refresh_period, refresh_time, corrector_flag] = mesh.boundary_conditions[bc_ind][3][3]
+    
 
     interior_cell_id = mesh.boundary_conditions[bc_ind][4][0][1]
 
@@ -20,6 +20,7 @@ def mdot_from_stagnation_inflow_bc(mesh, bc_ind, t_current):
     T_stag = gs.T
 
     if mass_flux > 0.0:
+        [refresh_period, refresh_time, corrector_flag] = mesh.boundary_conditions[bc_ind][3][3]
         if (not corrector_flag) and (t_current > refresh_time):
             print("Switching on corrector step for stagnation boundary condition.")
             corrector_flag = True

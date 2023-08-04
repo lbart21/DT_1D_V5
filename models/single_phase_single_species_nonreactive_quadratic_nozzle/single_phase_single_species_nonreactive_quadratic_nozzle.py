@@ -57,14 +57,19 @@ class SinglePhaseSingleSpeciesNonreactiveQuadraticNozzle(SingleInlet1DMeshObject
             pos_x_e = (cell + 1.0) * L / n_cells
 
             D_w = self.find_diameter_at_x(geometry = geometry, x = pos_x_w)
-            D_c = self.find_diameter_at_x(geometry = geometry, x = pos_x_c)
+            #D_c = self.find_diameter_at_x(geometry = geometry, x = pos_x_c)
             D_e = self.find_diameter_at_x(geometry = geometry, x = pos_x_e)
+            D_c = 0.5 * (D_w + D_e)
 
             dx = L / n_cells
+            dV = pi * (D_w ** 2.0 + D_w * D_e + D_e ** 2.0) * dx / 12.0
+            #A_c = 0.25 * pi * D_c ** 2.0
+            A_c = dV / dx
+
             geo = {
                 "dx"    :   dx,
-                "dV"    :   pi * (D_w ** 2.0 + D_w * D_e + D_e ** 2.0) * dx / 12.0,
-                "A_c"   :   0.25 * pi * D_c ** 2.0,
+                "dV"    :   dV,
+                "A_c"   :   A_c,
                 "A_s"   :   0.25 * pi * (D_w + D_e) * (4.0 * dx ** 2.0 + (D_w - D_e) ** 2.0) ** 0.5,
                 "pos_x" :   pos_x_c
             }

@@ -12,8 +12,9 @@ def generate_average_from_eilmer_extract(line_extract_data_file, x, ymin, ymax, 
     """
     # TODO include flag to do average average or mass flux average
     # mass flux average = sum(phi * rho * vel_x * pi * (y2^2 - y1^2)) / sum(rho * vel_x * pi*(y2^2 - y1^2))
-    y_sample = linspace(ymin, ymax, n+2)
-    y_sample = y_sample[1:-1]
+    y_sample = linspace(ymin, ymax, n)
+    #y_sample = linspace(ymin, ymax, n + 2)
+    #y_sample = y_sample[1:-1]
     y_boundaries = 0.5 * (y_sample[:-1] + y_sample[1:])
     y_sample = y_sample.tolist()
     y_boundaries = [ymin] + y_boundaries.tolist() + [ymax]
@@ -24,7 +25,8 @@ def generate_average_from_eilmer_extract(line_extract_data_file, x, ymin, ymax, 
     nearest_cell_idxs = [None] * n
     for i in range(n):
         nearest_cell_idxs[i] = find_nearest_cell_idx(sample_location = [x, y_sample[i]], cell_array = cell_data)
-    
+    print(line_extract_data_file)
+    print(nearest_cell_idxs)
     if "vel" in extract_vars:
         cell_data["vel"] = (cell_data["vel_x"] ** 2.0 + cell_data["vel_y"] ** 2.0) ** 0.5
     if "Ma" in extract_vars:
@@ -70,7 +72,7 @@ def find_nearest_cell_idx(sample_location, cell_array):
     for i in range(cell_array.shape[0]):
         cell_pos_x = cell_array["pos_x"][i]
         cell_pos_y = cell_array["pos_y"][i]
-        dist = ((pos_x - cell_pos_x) ** 2.0 + (pos_y - cell_pos_y) ** 2.0)
+        dist = ((pos_x - cell_pos_x) ** 2.0 + (pos_y - cell_pos_y) ** 2.0) ** 0.5
         if dist < min_distance:
             nearest_cell_idx = i
             min_distance = dist

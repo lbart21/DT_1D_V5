@@ -22,6 +22,7 @@ from Algorithms.DT_1D_V5.post_processing.process_transient_interface_data \
 from Algorithms.DT_1D_V5.post_processing.generate_1D_averaged_data_from_2D_eilmer_data \
         import Averaged2DEilmerDataInto1D
 from Algorithms.DT_1D_V5.post_processing.generate_average_from_eilmer_extract_line import generate_average_from_eilmer_extract
+from Algorithms.DT_1D_V5.post_processing.extract_slice_fluxes_from_eilmer_extract_line_data import extract_slice_fluxes_from_eilmer_extract_line_data
 from Algorithms.MultiDimensionNewton.MultiDimensionNS import NewtonSolver
 
 
@@ -32,12 +33,19 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib import animation
 
-####################################################################################################
-def generate_single_spatial_cell_data_plots(data_files, plot_vars, label):
-    """
-    - data_files: list(str)
-    - plot_vars: list(list(str), str)
-    - label: str
+##############################################################################################
+def generate_single_spatial_cell_data_plots(data_files, plot_vars, label, \
+                                                include_geometry_profile):
+    """_summary_
+
+    Parameters
+    ----------
+    data_files : _type_
+        _description_
+    plot_vars : _type_
+        _description_
+    label : _type_
+        _description_
     """
     data_object = None
     for component_data_file in data_files:
@@ -50,11 +58,19 @@ def generate_single_spatial_cell_data_plots(data_files, plot_vars, label):
             data_object = pd.concat([data_object, data.component_data], \
                                         axis = 0, ignore_index = True)
     data_object = data_object.sort_values(by = ["pos_x"])
+    if include_geometry_profile:
+        data_object["R"] = (data_object["A_c"] / np.pi) ** 0.5
     for var in plot_vars:
-        fig, ax = plt.subplots()
-        fig.set_size_inches(15, 5)
+        fig, ax = plt.subplots(figsize=(15, 5))
         formatted_title_time = f"{t_final / 1e-6:.3f}"
         formatted_file_name_time = f"{t_final:.9f}"
+
+        if include_geometry_profile:
+            ax_radius = ax.twinx()
+            ax_radius.plot(data_object["pos_x"], data_object["R"], color = "black")
+            ax_radius.spines["right"].set_visible(False)
+            ax_radius.get_yaxis().set_visible(False)
+            ax_radius.set_ylim((0.0, 3.0 * np.max(data_object["R"])))
 
         if isinstance(var, list): #either list("massf_" or "molef_")
             ismassf = False
@@ -177,7 +193,17 @@ def generate_single_spatial_cell_data_plots(data_files, plot_vars, label):
                                             + formatted_title_time + r'$\mu$' + "s")
                 file_name = "Sim " + str(sim_number) + ' ' + label + ' ' + var \
                     + " distribution at t = " + formatted_file_name_time + ".jpg"
-
+            
+            elif var == "mass_flux":
+                y = data_object["rho"] * data_object["vel_x"] * data_object["A_c"]
+                ax.scatter(data_object["pos_x"], y, marker = '.')
+                ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
+                    rotation = "horizontal", ha = "right")
+                ax.set_title("Distribution of " + SYMBOLS[var] + " at t = " \
+                                + formatted_title_time + r'$\mu$' + "s")
+                file_name = "Sim " + str(sim_number) + ' ' + label + ' ' + var \
+                    + " distribution at t = " + formatted_file_name_time + ".jpg"
+                
             else: #plot regular property
                 ax.scatter(data_object["pos_x"], data_object[var], marker = '.')
                 ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
@@ -192,13 +218,21 @@ def generate_single_spatial_cell_data_plots(data_files, plot_vars, label):
         current_dir = os.getcwd()
         fig.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
-####################################################################################################
-def generate_spatial_cell_data_waterfall_plots(data_files, plot_vars, label):
-    """
-    - data_files: list(list(str))
-    - plot_vars: list(list(str), str)
-    - label: str
-    """
+#####################################################################################
+def generate_spatial_cell_data_waterfall_plots(data_files, plot_vars, label, include_geometry_profile):
+    """_summary_
+
+    Parameters
+    ----------
+    data_files : _type_
+        _description_
+    plot_vars : _type_
+        _description_
+    label : _type_
+        _description_
+    include_geometry_profile : _type_
+        _description_
+    """    
     data_objects = [None] * len(data_files)
     time_list = [None] * len(data_files)
 
@@ -215,10 +249,18 @@ def generate_spatial_cell_data_waterfall_plots(data_files, plot_vars, label):
                 data_objects[ind] = pd.concat([data_objects[ind], data.component_data], \
                                                 axis = 0, ignore_index = True)
         data_objects[ind] = data_objects[ind].sort_values(by = ["pos_x"])
+        if include_geometry_profile:
+            data_objects[ind]["R"] = (data_objects[ind]["A_c"] / np.pi) ** 0.5
 
     for var in plot_vars:
-        fig, ax = plt.subplots()
-        fig.set_size_inches(15, 5)
+        fig, ax = plt.subplots(figsize=(15, 5))
+        if include_geometry_profile:
+            ax_radius = ax.twinx()
+            ax_radius.plot(data_objects[0]["pos_x"], data_objects[0]["R"], \
+                            color = "black")
+            ax_radius.spines["right"].set_visible(False)
+            ax_radius.get_yaxis().set_visible(False)
+            ax_radius.set_ylim((0.0, 3.0 * np.max(data_objects[0]["R"])))
 
         if isinstance(var, list):
             ismassf = False
@@ -379,13 +421,19 @@ def generate_spatial_cell_data_waterfall_plots(data_files, plot_vars, label):
         current_dir = os.getcwd()
         fig.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
-####################################################################################################
+#####################################################################################
 def generate_transient_cell_property_plots(cell_data_file, plot_vars, max_line = None):
-    """
-    - cell_data_file: str
-    - plot_vars: list(list(str), str)
-    - max_line: int if not None
-    """
+    """_summary_
+
+    Parameters
+    ----------
+    cell_data_file : _type_
+        _description_
+    plot_vars : _type_
+        _description_
+    max_line : _type_, optional
+        _description_, by default None
+    """    
     cell_data_object = ProcessTransientCellData(data_file_name = cell_data_file, \
                                                     max_line = max_line)
     cell_data = cell_data_object.cell_data
@@ -394,8 +442,7 @@ def generate_transient_cell_property_plots(cell_data_file, plot_vars, max_line =
     sim_number = cell_data_object.sim_number
 
     for var in plot_vars:
-        fig, ax = plt.subplots()
-        fig.set_size_inches(15, 5)
+        fig, ax = plt.subplots(figsize=(15, 5))
 
         if isinstance(var, list):
             ismolef = True
@@ -537,13 +584,19 @@ def generate_transient_cell_property_plots(cell_data_file, plot_vars, max_line =
         current_dir = os.getcwd()
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
-####################################################################################################
+#####################################################################################
 def generate_transient_interface_data_plots(interface_data_file, plot_vars, max_line = None):
-    """
-    - interface_data_file: str
-    - plot_vars: list(list(str), str)
-    - max_line: int if not None
-    """
+    """_summary_
+
+    Parameters
+    ----------
+    interface_data_file : _type_
+        _description_
+    plot_vars : _type_
+        _description_
+    max_line : _type_, optional
+        _description_, by default None
+    """    
     interface_data_object = ProcessTransientInterfaceData(\
                                 data_file_name = interface_data_file, \
                                 max_line = max_line)
@@ -553,8 +606,7 @@ def generate_transient_interface_data_plots(interface_data_file, plot_vars, max_
     sim_number = interface_data_object.sim_number
 
     for var in plot_vars:
-        fig, ax = plt.subplots()
-        fig.set_size_inches(15, 5)
+        fig, ax = plt.subplots(figsize=(15, 5))
 
         if var == "mass_flux" or var == "xMom_flux" or var == "energy_flux":
             ax.scatter(interface_data["time"], interface_data[var] * interface_data["A"], \
@@ -573,15 +625,20 @@ def generate_transient_interface_data_plots(interface_data_file, plot_vars, max_
         current_dir = os.getcwd()
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
-####################################################################################################
+#####################################################################################
 def generate_spatial_cell_data_plots_with_multiple_y_axes(spatial_cell_data_files, \
                                                             plot_vars, visible_axes, label):
-    """
-    - spatial_cell_data_files: list(str)
-    - plot_vars: list(list(list(str)))
-    - visible_axes: list(list(int))
-    """
+    """_summary_
 
+    Parameters
+    ----------
+    spatial_cell_data_files : _type_
+        _description_
+    visible_axes : _type_
+        _description_
+    label : _type_
+        _description_
+    """    
     data_object = None
     for component_data_file in spatial_cell_data_files:
         data = ProcessSpatialCellData(spatial_cell_data_file = component_data_file)
@@ -605,15 +662,14 @@ def generate_spatial_cell_data_plots_with_multiple_y_axes(spatial_cell_data_file
                             # get plotted on the same axis
         num_active_axes = sum(visible_axes[plot_num])
 
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(15, 5))
         axes = [ax] + [ax.twinx() for _ in range(num_active_axes - 1)]
-        fig.set_size_inches(15, 5)
 
         fig.subplots_adjust(right=0.9 - 0.05 * (num_active_axes - 1))
 
-        if ["D"] in plot_vars[plot_num]:
+        if ["R"] in plot_vars[plot_num]:
             A_c = data_object["A_c"]
-            data_object["D"] = (4.0 * A_c / np.pi) ** 0.5
+            data_object["R"] = (A_c / np.pi) ** 0.5
 
         new_axes_location = 1.0
         right_spine_taken = False
@@ -637,13 +693,13 @@ def generate_spatial_cell_data_plots_with_multiple_y_axes(spatial_cell_data_file
         marker_location = 0
 
         for axis_plot_ind, axis_plot_vars in enumerate(plot_vars[plot_num]):
-            if axis_plot_vars == ["D"]:
-                axes[axis_plot_ind].set_ylim((0.0, 3.0 * np.max(data_object["D"])))
-                p_ind, = axes[axis_plot_ind].plot(data_object["pos_x"], data_object["D"], \
-                                                    label = SYMBOLS["D"], color = "black")
+            if axis_plot_vars == ["R"]:
+                axes[axis_plot_ind].set_ylim((0.0, 3.0 * np.max(data_object["R"])))
+                p_ind, = axes[axis_plot_ind].plot(data_object["pos_x"], data_object["R"], \
+                                                    label = SYMBOLS["R"], color = "black")
                 if visible_axes[plot_num][axis_plot_ind] == 1:
                     plot_list.append(p_ind)
-                    axes[axis_plot_ind].set_ylabel(SYMBOLS["D"] + " (" + SI_UNITS["D"] +")", \
+                    axes[axis_plot_ind].set_ylabel(SYMBOLS["R"] + " (" + SI_UNITS["R"] +")", \
                             ha = "right")
             elif axis_plot_vars == ["massf"]: #plot all mass fractions on the 1 axis
                 column_names = list(data_object.columns)
@@ -754,12 +810,16 @@ def generate_spatial_cell_data_plots_with_multiple_y_axes(spatial_cell_data_file
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
 
-####################################################################################################
-def generate_thrust_contribution_plot(spatial_cell_data_files, spatial_interface_data_file):
-    """
-    spatial_cell_data_files: list(str)
-    spatial_interface_data_file: str
-    """
+#####################################################################################
+def generate_thrust_contribution_plot(spatial_cell_data_files, \
+                            spatial_interface_data_file):
+    """_summary_
+
+    Parameters
+    ----------
+    spatial_cell_data_files : _type_
+        _description_
+    """    
     cell_data_object = None
     for component_cell_data_file in spatial_cell_data_files:
         data = ProcessSpatialCellData(spatial_cell_data_file = component_cell_data_file)
@@ -773,7 +833,7 @@ def generate_thrust_contribution_plot(spatial_cell_data_files, spatial_interface
     cell_data_object = cell_data_object.sort_values(by = ["pos_x"])
     
     cell_data_object["net_thrust"] = None
-    cell_data_object["D"] = (4.0 * cell_data_object["A_c"] / np.pi) ** 0.5
+    cell_data_object["R"] = (cell_data_object["A_c"] / np.pi) ** 0.5
     interface_data_object = ProcessSpatialInterfaceData( \
                                 spatial_interface_data_file = spatial_interface_data_file)
     interface_data = interface_data_object.interface_data
@@ -789,8 +849,7 @@ def generate_thrust_contribution_plot(spatial_cell_data_files, spatial_interface
     
     cell_data_object["cumulative_thrust"] = cell_data_object["net_thrust"].cumsum()
 
-    fig, ax = plt.subplots()
-    fig.set_size_inches(15, 5)
+    fig, ax = plt.subplots(figsize=(15, 5))
     axes = [ax] + [ax.twinx()]
 
     plot_list = []
@@ -807,8 +866,8 @@ def generate_thrust_contribution_plot(spatial_cell_data_files, spatial_interface
     plot_list.append(p_ind0)
     plot_list.append(p_ind1)
     axes[0].set_ylabel(r"$Thrust$ $(N)$")
-    axes[1].plot(cell_data_object["pos_x"], cell_data_object["D"])
-    axes[1].set_ylim((0.0, 3.0 * np.max(cell_data_object["D"])))
+    axes[1].plot(cell_data_object["pos_x"], cell_data_object["R"])
+    axes[1].set_ylim((0.0, 3.0 * np.max(cell_data_object["R"])))
     ax.legend(loc = 'upper center', bbox_to_anchor = (0.5, -0.12), \
                 handles = plot_list, ncol = 2)
         
@@ -827,11 +886,17 @@ def generate_thrust_contribution_plot(spatial_cell_data_files, spatial_interface
     total_cumulative_thrust = cell_data_object["cumulative_thrust"][last_cell_index]
     print("Total cumulative thrust:", total_cumulative_thrust, "(N)")
 
-####################################################################################################
+#####################################################################################
 def generate_transient_gross_thrust_plot(transient_interface_data_file, max_line = None):
-    """
-    - transient_interface_data_file: str
-    """
+    """_summary_
+
+    Parameters
+    ----------
+    transient_interface_data_file : _type_
+        _description_
+    max_line : _type_, optional
+        _description_, by default None
+    """    
     transient_interface_data_object = ProcessTransientInterfaceData(\
                     data_file_name = transient_interface_data_file, max_line = max_line)
     transient_interface_data = transient_interface_data_object.interface_data
@@ -845,8 +910,7 @@ def generate_transient_gross_thrust_plot(transient_interface_data_file, max_line
 
     transient_interface_data["Thrust"] = A_e * (m_dot * vel_x_e + p_e)
 
-    fig, ax = plt.subplots()
-    fig.set_size_inches(15, 5)
+    fig, ax = plt.subplots(figsize=(15, 5))
 
     ax.scatter(transient_interface_data["time"] * 1e3, transient_interface_data["Thrust"], \
                 marker = ".")
@@ -858,18 +922,22 @@ def generate_transient_gross_thrust_plot(transient_interface_data_file, max_line
     current_dir = os.getcwd()
     plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
     plt.close()
-####################################################################################################
-def generate_spatial_interface_data_plots_with_multiple_y_axes(spatial_interface_data_file, \
-                                                            plot_vars, visible_axes, label):
-    """
-    - spatial_interface_data_file: str
-    - plot_vars: list(list(list(str)))
-    - visible_axes: list(list(int))
-    - label: str
-    """
+#####################################################################################
+def generate_spatial_interface_data_plots_with_multiple_y_axes(\
+                        spatial_interface_data_file, plot_vars, visible_axes, label):
+    """_summary_
 
-    interface_data_object = ProcessSpatialInterfaceData(spatial_interface_data_file = \
-                                                            spatial_interface_data_file)
+    Parameters
+    ----------
+    plot_vars : _type_
+        _description_
+    visible_axes : _type_
+        _description_
+    label : _type_
+        _description_
+    """    
+    interface_data_object = ProcessSpatialInterfaceData(\
+                        spatial_interface_data_file = spatial_interface_data_file)
     interface_data = interface_data_object.interface_data
     interface_data = interface_data.sort_values(by = ["pos_x"])
 
@@ -883,15 +951,14 @@ def generate_spatial_interface_data_plots_with_multiple_y_axes(spatial_interface
 
     for plot_num in range(len(plot_vars)):
         num_active_axes = sum(visible_axes[plot_num])
-        fig, ax = plt.subplots()
+        fig, ax = plt.subplots(figsize=(15, 5))
         axes = [ax] + [ax.twinx() for _ in range(num_active_axes - 1)]
-        fig.set_size_inches(15, 5)
 
         fig.subplots_adjust(right=0.9 - 0.05 * (num_active_axes - 1))
 
-        if ["D"] in plot_vars[plot_num]:
+        if ["R"] in plot_vars[plot_num]:
             A_c = interface_data["A_c"]
-            interface_data["D"] = (4.0 * A_c / np.pi) ** 0.5
+            interface_data["R"] = (A_c / np.pi) ** 0.5
         
         new_axes_location = 1.0
         right_spine_taken = False
@@ -914,20 +981,20 @@ def generate_spatial_interface_data_plots_with_multiple_y_axes(spatial_interface
         plot_list = []
         marker_location = 0
         for axis_plot_ind, axis_plot_vars in enumerate(plot_vars[plot_num]):
-            if axis_plot_vars == ["D"]:
-                axes[axis_plot_ind].set_ylim((0.0, 3.0 * np.max(interface_data["D"])))
+            if axis_plot_vars == ["R"]:
+                axes[axis_plot_ind].set_ylim((0.0, 3.0 * np.max(interface_data["R"])))
                 p_ind, = axes[axis_plot_ind].plot(interface_data["pos_x"], \
-                                                    interface_data["D"], \
-                                                    label = SYMBOLS["D"], color = "black")
+                                                    interface_data["R"], \
+                                                    label = SYMBOLS["R"], color = "black")
                 if visible_axes[plot_num][axis_plot_ind] == 1:
                     plot_list.append(p_ind)
-                    axes[axis_plot_ind].set_ylabel(SYMBOLS["D"] + " (" + SI_UNITS["D"] +")", \
+                    axes[axis_plot_ind].set_ylabel(SYMBOLS["R"] + " (" + SI_UNITS["R"] +")", \
                             ha = "right")
             
             else:
                 for axis_plot_var in axis_plot_vars:
                     if axis_plot_var in set(("mass_flux", "xMom_flux", "energy_flux")):
-                        interface_data[axis_plot_var] *= axis_plot_var["A"]
+                        interface_data[axis_plot_var] *= interface_data["A"]
                     p_ind = axes[axis_plot_ind].scatter(interface_data["pos_x"], \
                                                     interface_data[axis_plot_var], \
                                                     marker = marker_list[marker_location], \
@@ -953,9 +1020,22 @@ def generate_spatial_interface_data_plots_with_multiple_y_axes(spatial_interface
         current_dir = os.getcwd()
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
-####################################################################################################
+#####################################################################################
 class GenerateTransientAnimationOfSpatialCellData():
     def __init__(self, spatial_cell_data_files, plot_vars, slow_down_factor, label) -> None:
+        """_summary_
+
+        Parameters
+        ----------
+        spatial_cell_data_files : _type_
+            _description_
+        plot_vars : _type_
+            _description_
+        slow_down_factor : _type_
+            _description_
+        label : _type_
+            _description_
+        """        
         self.data_objects = [None] * len(spatial_cell_data_files)
         self.time_list = [None] * len(spatial_cell_data_files)
 
@@ -980,8 +1060,7 @@ class GenerateTransientAnimationOfSpatialCellData():
         ffwriter = animation.FFMpegWriter()
         current_dir = os.getcwd()
         for var in plot_vars:
-            self.fig, self.ax = plt.subplots()
-            self.fig.set_size_inches(15, 5)
+            self.fig, self.ax = plt.subplots(figsize=(15, 5))
 
             y_min = min([min(df[var]) for df in self.data_objects])
             y_max = max([max(df[var]) for df in self.data_objects])
@@ -1010,8 +1089,29 @@ class GenerateTransientAnimationOfSpatialCellData():
         if frame < len(self.data_objects) - 1:
             time.sleep(self.dt_list[frame] * slow_down_factor)
         return (scat, )
-####################################################################################################
-def compare_to_1D_analytical_result(spatial_cell_data_files, A_throat, x_throat, gamma, R):
+#####################################################################################
+def compare_to_1D_analytical_result(spatial_cell_data_files, A_throat, x_throat, \
+                                        gamma, R, include_geometry_profile, interp_flag):
+    """_summary_
+
+    Parameters
+    ----------
+    spatial_cell_data_files : _type_
+        _description_
+    A_throat : _type_
+        _description_
+    x_throat : _type_
+        _description_
+    R : _type_
+        _description_
+    include_geometry_profile : _type_
+        _description_
+
+    Returns
+    -------
+    _type_
+        _description_
+    """    
     data_object = None
     for component_data_file in spatial_cell_data_files:
         data = ProcessSpatialCellData(spatial_cell_data_file = component_data_file)
@@ -1022,6 +1122,8 @@ def compare_to_1D_analytical_result(spatial_cell_data_files, A_throat, x_throat,
             data_object = pd.concat([data_object, data.component_data], \
                                         axis = 0, ignore_index = True)
     data_object = data_object.sort_values(by = ["pos_x"])
+    if include_geometry_profile:
+        data_object["R"] = (data_object["A_c"] / np.pi) ** 0.5
 
     Ma_anal = [None] * len(data_object["pos_x"])
 
@@ -1056,11 +1158,22 @@ def compare_to_1D_analytical_result(spatial_cell_data_files, A_throat, x_throat,
     analytical_props = [p_anal, T_anal, rho_anal, Ma_anal, vel_x_anal]
     current_dir = os.getcwd()
     for i in range(len(props)):
-        fig, ax = plt.subplots()
-        fig.set_size_inches(15, 5)
-
-        ax.scatter(data_object["pos_x"], data_object[props[i]], marker = ".",
+        fig, ax = plt.subplots(figsize=(15, 5))
+        if include_geometry_profile:
+            ax_radius = ax.twinx()
+            ax_radius.plot(data_object["pos_x"], data_object["R"], color = "black")
+            ax_radius.spines["right"].set_visible(False)
+            ax_radius.get_yaxis().set_visible(False)
+            ax_radius.set_ylim((0.0, 3.0 * np.max(data_object["R"])))
+        if interp_flag[0]:
+            pos_x_sample = np.linspace(data_object["pos_x"][0], data_object["pos_x"][-1], interp_flag[1])
+            y_interp = np.interp(pos_x_sample, data_object["pos_x"], data_object[props[i]])
+            ax.scatter(pos_x_sample, y_interp, marker = ".",
                         label = "Simulation")
+        else:
+            ax.scatter(data_object["pos_x"], data_object[props[i]], marker = ".",
+                        label = "Simulation")
+        
         ax.plot(data_object["pos_x"], analytical_props[i], \
                         label = "Analytical")
 
@@ -1075,10 +1188,19 @@ def compare_to_1D_analytical_result(spatial_cell_data_files, A_throat, x_throat,
                        props[i] + ".jpg"
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches="tight")
         plt.close()
-####################################################################################################
+#####################################################################################
 def generate_transient_cell_property_plots_with_multiple_y_axes(transient_cell_data_file, \
                                                                 plot_vars, visible_axes, \
                                                                 max_line = None):
+    """_summary_
+
+    Parameters
+    ----------
+    transient_cell_data_file : _type_
+        _description_
+    visible_axes : _type_
+        _description_
+    """    
     cell_data_total = ProcessTransientCellData(data_file_name = transient_cell_data_file, \
                                             max_line = max_line)
     sim_number = cell_data_total.sim_number
@@ -1226,11 +1348,18 @@ def generate_transient_cell_property_plots_with_multiple_y_axes(transient_cell_d
         current_dir = os.getcwd()
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
-####################################################################################################
+#####################################################################################
 def generate_transient_interface_property_plots_with_multiple_y_axes(\
                                                             transient_interface_data_file, \
                                                             plot_vars, visible_axes, \
                                                             max_line = None):
+    """_summary_
+
+    Parameters
+    ----------
+    visible_axes : _type_
+        _description_
+    """    
     interface_data_total = ProcessTransientInterfaceData(\
                                 data_file_name = transient_interface_data_file, \
                                 max_line = max_line)
@@ -1301,9 +1430,30 @@ def generate_transient_interface_property_plots_with_multiple_y_axes(\
     current_dir = os.getcwd()
     plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
     plt.close()
-####################################################################################################
+#####################################################################################
 def generate_1D_volume_averaged_plots_from_eilmer_data(eilmer_cell_data_files, properties, \
                                                 pos_x_array, x_tol, plot_vars):
+    """_summary_
+
+    Parameters
+    ----------
+    eilmer_cell_data_files : _type_
+        _description_
+    properties : _type_
+        _description_
+    x_tol : _type_
+        _description_
+    plot_vars : _type_
+        _description_
+    
+    Intermediate outputs
+    ----------
+    None
+
+    Returns 
+    ----------
+    None
+    """    
     eilmer_data = Averaged2DEilmerDataInto1D(eilmer_cell_data_files = eilmer_cell_data_files, \
                                              properties = properties, \
                                             pos_x_array = pos_x_array, \
@@ -1312,8 +1462,7 @@ def generate_1D_volume_averaged_plots_from_eilmer_data(eilmer_cell_data_files, p
     formatted_file_name_time = f"{eilmer_data.t_final:.9f}"
     current_dir = os.getcwd()
     for var in plot_vars:
-        fig, ax = plt.subplots()
-        #fig.set_size_inches(15, 5)
+        fig, ax = plt.subplots(figsize=(15, 5))
         ax.scatter(eilmer_data.averaged_data["pos_x"], eilmer_data.averaged_data[var], marker = ".")
         ax.set_xlabel("Position (m)")
         ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
@@ -1325,25 +1474,56 @@ def generate_1D_volume_averaged_plots_from_eilmer_data(eilmer_cell_data_files, p
                                 formatted_file_name_time  + ".jpg"
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
-####################################################################################################
-def generate_1D_area_averaged_plots_from_eilmer_data(eilmer_extract_line_files, plot_vars, n_points, pos_x_array, ymax_array):
-    """
-    - eilmer_extract_line_files: list(str)
-    - plot_vars: list(str)
-    - n_points: int -> number of points to sample along for each x value
-    - pos_x_array: list(float)
-    - ymax_array: list(float)
-    """
+#####################################################################################
+def generate_1D_area_averaged_plots_from_eilmer_data(eilmer_extract_line_files, plot_vars, n_points, pos_x_array, ymax_array, include_bounding_lines):
+    """_summary_
+
+    Parameters
+    ----------
+    eilmer_extract_line_files : _type_
+        _description_
+    plot_vars : _type_
+        _description_
+    n_points : _type_
+        _description_
+    pos_x_array : _type_
+        _description_
+    ymax_array : _type_
+        _description_
+    include_bounding_lines : _type_
+        _description_
+    
+    Intermediate outputs
+    ----------
+    None
+
+    Returns 
+    ----------
+    None
+    """    
     n_cells = len(pos_x_array)
-    data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
+    average_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
+    min_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
+    max_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
     for ind, x_val in enumerate(pos_x_array):
-        average_data, min_data, max_data = generate_average_from_eilmer_extract(line_extract_data_file = eilmer_extract_line_files[ind], x = x_val, ymin = 0.0, ymax = ymax_array[ind], n = n_points, extract_vars = plot_vars)
+        average_data, min_data, max_data = generate_average_from_eilmer_extract(\
+            line_extract_data_file = eilmer_extract_line_files[ind], \
+            x = x_val, ymin = 0.0, ymax = ymax_array[ind], n = n_points, \
+            extract_vars = plot_vars)
         for column in plot_vars:
-            data_df[column][ind] = average_data[column]
+            average_data_df[column][ind] = average_data[column]
+            min_data_df[column][ind] = min_data[column]
+            max_data_df[column][ind] = max_data[column]
+
     current_dir = os.getcwd()
     for var in plot_vars:
         fig, ax = plt.subplots(figsize=(15, 5))
-        ax.scatter(pos_x_array, data_df[var], marker = ".")
+        ax.scatter(pos_x_array, average_data_df[var], marker = ".")
+        if include_bounding_lines:
+            ax.fill_between(pos_x_array, min_data_df[var].tolist(), \
+                                max_data_df[var].tolist())
+            ax.plot(pos_x_array, min_data_df[var].tolist(), c="k")
+            ax.plot(pos_x_array, max_data_df[var].tolist(), c="k")
         ax.set_xlabel("Position (m)")
         ax.set_title("Area Averaged Spatial Distribution of " + SYMBOLS[var])
         ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
@@ -1352,14 +1532,35 @@ def generate_1D_area_averaged_plots_from_eilmer_data(eilmer_extract_line_files, 
         file_name = "Area averaged spatial distribution of " + var + ".jpg"
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
-####################################################################################################
-def compare_1D_simulation_to_area_averaged_eilmer_extract(eilmer_extract_line_files, simulation_files, plot_vars, n_points, add_bounding_lines):
-    """
-    - eilmer_extract_line_files: list(str)
-    - simulation_files: list(str)
-    - plot_vars: list(str)
-    - n_points: int -> number of points to sample along for each x value
-    """
+#####################################################################################
+def compare_1D_simulation_to_area_averaged_eilmer_extract(eilmer_extract_line_files, simulation_files, plot_vars, n_points, add_bounding_lines, include_geometry_profile, secondary_1D_files_for_proper_geometry = None, x_scale = 1.0):
+    """_summary_
+
+    Parameters
+    ----------
+    eilmer_extract_line_files : _type_
+        _description_
+    simulation_files : _type_
+        _description_
+    plot_vars : _type_
+        _description_
+    n_points : _type_
+        _description_
+    add_bounding_lines : _type_
+        _description_
+    include_geometry_profile : _type_
+        _description_
+    secondary_1D_files_for_proper_geometry : _type_
+        _description_
+
+    Intermediate outputs
+    ----------
+    None
+
+    Returns 
+    ----------
+    None
+    """    
     data_object = None
     for component_data_file in simulation_files:
         data = ProcessSpatialCellData(spatial_cell_data_file = component_data_file)
@@ -1370,16 +1571,33 @@ def compare_1D_simulation_to_area_averaged_eilmer_extract(eilmer_extract_line_fi
         else:
             data_object = pd.concat([data_object, data.component_data], \
                                         axis = 0, ignore_index = True)
+    
     data_object = data_object.sort_values(by = ["pos_x"])
+
+    if secondary_1D_files_for_proper_geometry is None:
+        ymax_list = ((data_object["A_c"] / np.pi) ** 0.5).tolist()
+
+    else:
+        geometry_data_object = None
+        for component_data_file in secondary_1D_files_for_proper_geometry:
+            geometry_data = ProcessSpatialCellData(spatial_cell_data_file = component_data_file)
+            if geometry_data_object is None:
+                geometry_data_object = geometry_data.component_data
+            else:
+                geometry_data_object = pd.concat([geometry_data_object, geometry_data.component_data], \
+                                        axis = 0, ignore_index = True)
+        ymax_list = ((geometry_data_object["A_c"] / np.pi) ** 0.5).tolist()
+    
     pos_x_list = data_object["pos_x"].tolist()
-    ymax_list = ((data_object["A_c"] / np.pi) ** 0.5).tolist()
     n_cells = data_object.shape[0]
     ave_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
+    if include_geometry_profile:
+        data_object["R"] = (data_object["A_c"] / np.pi) ** 0.5
     if add_bounding_lines:
         min_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
         max_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
     for ind, x_val in enumerate(pos_x_list):
-        average_data, min_data, max_data = generate_average_from_eilmer_extract(line_extract_data_file = eilmer_extract_line_files[ind], x = x_val, ymin = 0.0, ymax = ymax_list[ind], n = n_points, extract_vars = plot_vars)
+        average_data, min_data, max_data = generate_average_from_eilmer_extract(line_extract_data_file = eilmer_extract_line_files[ind], x = x_val * x_scale, ymin = 0.0, ymax = ymax_list[ind], n = n_points, extract_vars = plot_vars)
         for column in plot_vars:
             ave_data_df[column][ind] = average_data[column]
             if add_bounding_lines:
@@ -1389,6 +1607,13 @@ def compare_1D_simulation_to_area_averaged_eilmer_extract(eilmer_extract_line_fi
     for var in plot_vars:
         print(var)
         fig, ax = plt.subplots(figsize=(15, 5))
+        if include_geometry_profile:
+            ax_radius = ax.twinx()
+            ax_radius.plot(data_object["pos_x"], data_object["R"], color = "black")
+            ax_radius.spines["right"].set_visible(False)
+            ax_radius.get_yaxis().set_visible(False)
+            ax_radius.set_ylim((0.0, 3.0 * np.max(data_object["R"])))
+
         ax.scatter(pos_x_list, ave_data_df[var], marker = ".", label = "2D Average")
         if var == "vel":
             ax.scatter(pos_x_list, data_object["vel_x"], marker = ".", label = "1D Simulation")
@@ -1398,8 +1623,7 @@ def compare_1D_simulation_to_area_averaged_eilmer_extract(eilmer_extract_line_fi
             ax.fill_between(pos_x_list, min_data_df[var].tolist(), max_data_df[var].tolist(), alpha=0.2)
             ax.plot(pos_x_list, min_data_df[var].tolist(), c="k")
             ax.plot(pos_x_list, max_data_df[var].tolist(), c="k")
-            #ax.scatter(pos_x_list, min_data_df[var], marker = ".", label = "2D Minimum")
-            #ax.scatter(pos_x_list, max_data_df[var], marker = ".", label = "2D Maximum")
+
         ax.legend()
         ax.grid()
         ax.set_xlabel("Position (m)")
@@ -1407,8 +1631,163 @@ def compare_1D_simulation_to_area_averaged_eilmer_extract(eilmer_extract_line_fi
         ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
                     rotation = "horizontal", ha = "right")
         if add_bounding_lines:
-            file_name = "Comparison of area averaged to 1D simulation spatial distribution of " + var + " with bounding lines.jpg"
+            file_name = "Sim " + str(sim_number) + " Comparison of area averaged to 1D simulation spatial distribution of " + var + " with bounding lines.jpg"
         else:
-            file_name = "Comparison of area averaged to 1D simulation spatial distribution of " + var + " without bounding lines.jpg"
+            file_name = "Sim " + str(sim_number) + " Comparison of area averaged to 1D simulation spatial distribution of " + var + " without bounding lines.jpg"
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
+        plt.close()
+######################################################################################
+def compare_fluxes_between_eilmer_slices_and_1D_cell_data(spatial_cell_data_files, \
+                    eilmer_extract_line_files, plot_vars, include_geometry_profile, \
+                    n_points, secondary_1D_files_for_proper_geometry = None, x_scale = 1.0):
+    """
+    Arguments
+    ----------
+    - spatial_cell_data_files : list(str)
+        - File names of DT_1D_V5 spatial cell data files
+    - plot_vars : list(str)
+        - List of fluxes that are wanted to be plotted
+    - include_geometry_profile : bool
+        - Include geometry outline at bottom of plot
+    - secondary_1D_files_for_proper_geometry : list(str)
+        - List of 1D spatial cell data file names that contain proper geometry values
+
+    Intermediate outputs
+    ----------
+    None
+
+    Returns 
+    ----------
+    None
+    """      
+    data_object = None
+    for component_data_file in spatial_cell_data_files:
+        data = ProcessSpatialCellData(spatial_cell_data_file = component_data_file)
+        if data_object is None:
+            data_object = data.component_data
+            t_final = data.t_final
+            sim_number = data.sim_number
+        else:
+            data_object = pd.concat([data_object, data.component_data], \
+                                        axis = 0, ignore_index = True)
+    
+    data_object = data_object.sort_values(by = ["pos_x"])
+    
+    if secondary_1D_files_for_proper_geometry is None: # Use data_object to get 
+                                                       # geometry data
+        ymax_list = ((data_object["A_c"] / np.pi) ** 0.5).tolist()
+
+    else:
+        geometry_data_object = None
+        for component_data_file in secondary_1D_files_for_proper_geometry:
+            geometry_data = ProcessSpatialCellData(spatial_cell_data_file = component_data_file)
+            if geometry_data_object is None:
+                geometry_data_object = geometry_data.component_data
+            else:
+                geometry_data_object = pd.concat([geometry_data_object, geometry_data.component_data], \
+                                        axis = 0, ignore_index = True)
+        ymax_list = ((geometry_data_object["A_c"] / np.pi) ** 0.5).tolist()
+
+    pos_x_list = data_object["pos_x"].tolist()
+    n_cells = data_object.shape[0]
+    flux_data_df = pd.DataFrame(index=range(n_cells), columns=plot_vars)
+
+    if include_geometry_profile:
+        data_object["R"] = (data_object["A_c"] / np.pi) ** 0.5
+    
+    for ind, x_val in enumerate(pos_x_list):
+        fluxes = extract_slice_fluxes_from_eilmer_extract_line_data(line_extract_data_file = eilmer_extract_line_files[ind], \
+        x = x_val * x_scale, ymin = 0.0, ymax = ymax_list[ind], n = n_points, extract_vars = plot_vars)
+        for column in plot_vars:
+            flux_data_df[column][ind] = fluxes[column]
+
+    current_dir = os.getcwd()
+    for var in plot_vars:
+        print(var)
+        fig, ax = plt.subplots(figsize=(15, 5))
+        if include_geometry_profile:
+            ax_radius = ax.twinx()
+            ax_radius.plot(data_object["pos_x"], data_object["R"], color = "black")
+            ax_radius.spines["right"].set_visible(False)
+            ax_radius.get_yaxis().set_visible(False)
+            ax_radius.set_ylim((0.0, 3.0 * np.max(data_object["R"])))
+        
+        ax.scatter(pos_x_list, flux_data_df[var], marker = ".", label = "2D fluxes")
+
+        if var == "mass_flux":
+            rho = data_object["rho"]
+            vel_x = data_object["vel_x"]
+            A_c = data_object["A_c"]
+            mass_flux = rho * vel_x * A_c
+            ax.scatter(pos_x_list, mass_flux, marker = ".", label = "1D fluxes")
+
+        elif var == "xMom_flux":
+            rho = data_object["rho"]
+            vel_x = data_object["vel_x"]
+            A_c = data_object["A_c"]
+            xMom_flux = rho * vel_x * vel_x * A_c
+            ax.scatter(pos_x_list, xMom_flux, marker = ".", label = "1D fluxes")
+
+        elif var == "energy_flux":
+            rho = data_object["rho"]
+            vel_x = data_object["vel_x"]
+            p = data_object["p"]
+            u = data_object["u"]
+            A_c = data_object["A_c"]
+            energy_flux = rho * A_c * (u + p / rho + 0.5 * vel_x ** 2.0) * vel_x
+            ax.scatter(pos_x_list, energy_flux, marker = ".", label = "1D fluxes")
+
+        ax.legend()
+        ax.grid()
+        ax.set_xlabel("Position (m)")
+
+        ax.set_title("Comparison Between 2D and 1D Simulation Results for " \
+                            + SYMBOLS[var] + " Fluxes")
+        ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
+                    rotation = "horizontal", ha = "right")
+        file_name = "Sim " + str(sim_number) + " Comparison between 2D and 1D results for " + var + " over spatial domain.jpg"
+        plt.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
+        plt.close()
+######################################################################################
+def generate_single_spatial_interface_data_plots(spatial_interface_data_file, \
+                                        plot_vars, label, include_geometry_profile):
+    """_summary_
+    """
+    interface_data_object = ProcessSpatialInterfaceData(spatial_interface_data_file = spatial_interface_data_file)
+    interface_data = interface_data_object.interface_data
+    interface_data = interface_data.sort_values(by = ["pos_x"])
+    t_final = interface_data_object.t_final
+    sim_number = interface_data_object.sim_number
+
+    if include_geometry_profile:
+        interface_data["R"] = (interface_data["A"] / np.pi) ** 0.5
+
+    for var in plot_vars:
+        fig, ax = plt.subplots(figsize=(15, 5))
+        formatted_title_time = f"{t_final / 1e-6:.3f}"
+        formatted_file_name_time = f"{t_final:.9f}"
+        
+        
+        if include_geometry_profile:
+            ax_radius = ax.twinx()
+            ax_radius.plot(interface_data["pos_x"], interface_data["R"], color = "black")
+            ax_radius.spines["right"].set_visible(False)
+            ax_radius.get_yaxis().set_visible(False)
+            ax_radius.set_ylim((0.0, 3.0 * np.max(interface_data["R"])))
+        
+        if var in set(["mass_flux", "xMom_flux", "energy_flux"]):
+            interface_data[var] *= interface_data["A"]
+
+        ax.scatter(interface_data["pos_x"], interface_data[var], marker = ".")
+        ax.set_ylabel(SYMBOLS[var] + " (" + SI_UNITS[var] +")", \
+                    rotation = "horizontal", ha = "right")
+        ax.set_title("Distribution of " + SYMBOLS[var] + " at t = " \
+                                + formatted_title_time + r'$\mu$' + "s")
+        file_name = "Sim " + str(sim_number) + ' ' + label + ' ' + var \
+                    + " distribution at t = " + formatted_file_name_time + ".jpg"
+        
+        ax.set_xlabel("Position (m)")
+        ax.grid()
+        current_dir = os.getcwd()
+        fig.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()

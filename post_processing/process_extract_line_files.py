@@ -3,6 +3,12 @@ import pandas as pd
 class ProcessExtractLineFiles():
     __slots__ = ["cell_data", "n_cells"]
     def __init__(self, extract_line_file) -> None:
+        """
+        Parameters
+        ----------
+        extract_line_file : _type_
+            _description_
+        """        
         cwd = os.getcwd()
         file_length = sum(1 for line in open(cwd + "/data/" + extract_line_file))
         self.n_cells = file_length - 1
