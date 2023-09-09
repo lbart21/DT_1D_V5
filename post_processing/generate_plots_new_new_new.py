@@ -33,19 +33,31 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 from matplotlib import animation
 
-##############################################################################################
+#######################################################################################
 def generate_single_spatial_cell_data_plots(data_files, plot_vars, label, \
                                                 include_geometry_profile):
-    """_summary_
+    """
+    Arguments
+    ---------
+    data_files : list(string)
+        List of spatial cell data files
+    plot_vars : list(list, string)
+        If list element is list, expects list of massf or molef names.
+        Else, expects specific individual properties, or massf/molef, in which case all mass/mole fractions will be plotted at once.
+    label : string
+        Additional label to give extra information in plot file name
+    include_geometry_profile : boolean
+        Toggle if geometry is to be plotted on top of figure
 
-    Parameters
-    ----------
-    data_files : _type_
-        _description_
-    plot_vars : _type_
-        _description_
-    label : _type_
-        _description_
+    Function Description
+    --------------------
+    Generates and saves plots in the plot folder which is a direct sub-directory of 
+    the executed Python file.
+    Generates one spatial distribution plot per entry in plot_vars. Each plot will have 1 property, unless massf, molef or lists of specific massf or molef are supplied.
+
+    Returns
+    -------
+    None
     """
     data_object = None
     for component_data_file in data_files:
@@ -89,11 +101,11 @@ def generate_single_spatial_cell_data_plots(data_files, plot_vars, label, \
                 formatted_species_name = ''.join(split_name)
                 SI_UNITS[prop] = r'$-$'
                 if ismassf:
-                    SYMBOLS[prop] = r"$" + formatted_species_name + "$" + ' ' + r'$Mass$' \
-                                + ' ' + r'$Fraction$'
+                    SYMBOLS[prop] = r"$" + formatted_species_name + "$" + ' ' + \
+                                    r'$Mass$' + ' ' + r'$Fraction$'
                 elif ismolef:
-                    SYMBOLS[prop] = r"$" + formatted_species_name + "$" + ' ' + r'$Mole$' \
-                                + ' ' + r'$Fraction$'
+                    SYMBOLS[prop] = r"$" + formatted_species_name + "$" + ' ' + \
+                                    r'$Mole$' + ' ' + r'$Fraction$'
                 ax.scatter(data_object["pos_x"], data_object[prop], marker = '.', \
                                 label = r"$" + formatted_species_name + "$")
             ax.legend()
@@ -219,19 +231,26 @@ def generate_single_spatial_cell_data_plots(data_files, plot_vars, label, \
         fig.savefig(current_dir + "/plots/" + file_name, bbox_inches = 'tight')
         plt.close()
 #####################################################################################
-def generate_spatial_cell_data_waterfall_plots(data_files, plot_vars, label, include_geometry_profile):
-    """_summary_
-
-    Parameters
+def generate_spatial_cell_data_waterfall_plots(data_files, plot_vars, label, \
+                                               include_geometry_profile):
+    """
+    Arguments
     ----------
-    data_files : _type_
+    data_files : list(string)
         _description_
     plot_vars : _type_
         _description_
-    label : _type_
+    label : string
         _description_
-    include_geometry_profile : _type_
+    include_geometry_profile : boolean
         _description_
+
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """    
     data_objects = [None] * len(data_files)
     time_list = [None] * len(data_files)
@@ -423,16 +442,22 @@ def generate_spatial_cell_data_waterfall_plots(data_files, plot_vars, label, inc
         plt.close()
 #####################################################################################
 def generate_transient_cell_property_plots(cell_data_file, plot_vars, max_line = None):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
-    cell_data_file : _type_
+    cell_data_file : string
         _description_
     plot_vars : _type_
         _description_
-    max_line : _type_, optional
+    max_line : integer, optional
         _description_, by default None
+    
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """    
     cell_data_object = ProcessTransientCellData(data_file_name = cell_data_file, \
                                                     max_line = max_line)
@@ -586,16 +611,22 @@ def generate_transient_cell_property_plots(cell_data_file, plot_vars, max_line =
         plt.close()
 #####################################################################################
 def generate_transient_interface_data_plots(interface_data_file, plot_vars, max_line = None):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
-    interface_data_file : _type_
+    interface_data_file : string
         _description_
     plot_vars : _type_
         _description_
-    max_line : _type_, optional
+    max_line : integer, optional
         _description_, by default None
+    
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """    
     interface_data_object = ProcessTransientInterfaceData(\
                                 data_file_name = interface_data_file, \
@@ -628,16 +659,22 @@ def generate_transient_interface_data_plots(interface_data_file, plot_vars, max_
 #####################################################################################
 def generate_spatial_cell_data_plots_with_multiple_y_axes(spatial_cell_data_files, \
                                                             plot_vars, visible_axes, label):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
-    spatial_cell_data_files : _type_
+    spatial_cell_data_files : list(string)
         _description_
     visible_axes : _type_
         _description_
-    label : _type_
+    label : string
         _description_
+    
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """    
     data_object = None
     for component_data_file in spatial_cell_data_files:
@@ -813,12 +850,20 @@ def generate_spatial_cell_data_plots_with_multiple_y_axes(spatial_cell_data_file
 #####################################################################################
 def generate_thrust_contribution_plot(spatial_cell_data_files, \
                             spatial_interface_data_file):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
     spatial_cell_data_files : _type_
         _description_
+    spatial_interface_data_file : _type_
+        _description_
+    
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """    
     cell_data_object = None
     for component_cell_data_file in spatial_cell_data_files:
@@ -888,14 +933,20 @@ def generate_thrust_contribution_plot(spatial_cell_data_files, \
 
 #####################################################################################
 def generate_transient_gross_thrust_plot(transient_interface_data_file, max_line = None):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
-    transient_interface_data_file : _type_
+    transient_interface_data_file : string
         _description_
-    max_line : _type_, optional
+    max_line : integer, optional
         _description_, by default None
+    
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """    
     transient_interface_data_object = ProcessTransientInterfaceData(\
                     data_file_name = transient_interface_data_file, max_line = max_line)
@@ -925,16 +976,24 @@ def generate_transient_gross_thrust_plot(transient_interface_data_file, max_line
 #####################################################################################
 def generate_spatial_interface_data_plots_with_multiple_y_axes(\
                         spatial_interface_data_file, plot_vars, visible_axes, label):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
+    spatial_interface_data_file : _type_
+        _description_
     plot_vars : _type_
         _description_
     visible_axes : _type_
         _description_
     label : _type_
         _description_
+    
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """    
     interface_data_object = ProcessSpatialInterfaceData(\
                         spatial_interface_data_file = spatial_interface_data_file)
@@ -1023,18 +1082,24 @@ def generate_spatial_interface_data_plots_with_multiple_y_axes(\
 #####################################################################################
 class GenerateTransientAnimationOfSpatialCellData():
     def __init__(self, spatial_cell_data_files, plot_vars, slow_down_factor, label) -> None:
-        """_summary_
-
-        Parameters
+        """
+        Arguments
         ----------
-        spatial_cell_data_files : _type_
+        spatial_cell_data_files : list(string)
             _description_
         plot_vars : _type_
             _description_
-        slow_down_factor : _type_
+        slow_down_factor : float
             _description_
-        label : _type_
+        label : string
             _description_
+        
+        Function Description
+        -----------
+
+        Returns
+        -----------
+        None
         """        
         self.data_objects = [None] * len(spatial_cell_data_files)
         self.time_list = [None] * len(spatial_cell_data_files)
@@ -1092,9 +1157,8 @@ class GenerateTransientAnimationOfSpatialCellData():
 #####################################################################################
 def compare_to_1D_analytical_result(spatial_cell_data_files, A_throat, x_throat, \
                                         gamma, R, include_geometry_profile, interp_flag):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
     spatial_cell_data_files : _type_
         _description_
@@ -1102,15 +1166,21 @@ def compare_to_1D_analytical_result(spatial_cell_data_files, A_throat, x_throat,
         _description_
     x_throat : _type_
         _description_
+    gamma : _type_
+        _description_
     R : _type_
         _description_
     include_geometry_profile : _type_
         _description_
+    interp_flag : _type_
+        _description_
+
+    Function Description
+    -----------
 
     Returns
-    -------
-    _type_
-        _description_
+    -----------
+    None
     """    
     data_object = None
     for component_data_file in spatial_cell_data_files:
@@ -1189,17 +1259,29 @@ def compare_to_1D_analytical_result(spatial_cell_data_files, A_throat, x_throat,
         plt.savefig(current_dir + "/plots/" + file_name, bbox_inches="tight")
         plt.close()
 #####################################################################################
-def generate_transient_cell_property_plots_with_multiple_y_axes(transient_cell_data_file, \
-                                                                plot_vars, visible_axes, \
-                                                                max_line = None):
-    """_summary_
-
-    Parameters
+def generate_transient_cell_property_plots_with_multiple_y_axes(\
+                                                        transient_cell_data_file, \
+                                                        plot_vars, \
+                                                        visible_axes, \
+                                                        max_line = None):
+    """
+    Arguments
     ----------
     transient_cell_data_file : _type_
         _description_
+    plot_vars : _type_
+        _description_
     visible_axes : _type_
         _description_
+    max_line : _type_
+        _description_
+    
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """    
     cell_data_total = ProcessTransientCellData(data_file_name = transient_cell_data_file, \
                                             max_line = max_line)
@@ -1353,12 +1435,24 @@ def generate_transient_interface_property_plots_with_multiple_y_axes(\
                                                             transient_interface_data_file, \
                                                             plot_vars, visible_axes, \
                                                             max_line = None):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
+    transient_interface_data_file : _type_
+        _description_
+    plot_vars : _type_
+        _description_
     visible_axes : _type_
         _description_
+    max_line : _type_
+        _description_
+    
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """    
     interface_data_total = ProcessTransientInterfaceData(\
                                 data_file_name = transient_interface_data_file, \
@@ -1433,25 +1527,25 @@ def generate_transient_interface_property_plots_with_multiple_y_axes(\
 #####################################################################################
 def generate_1D_volume_averaged_plots_from_eilmer_data(eilmer_cell_data_files, properties, \
                                                 pos_x_array, x_tol, plot_vars):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
     eilmer_cell_data_files : _type_
         _description_
     properties : _type_
+        _description_
+    pos_x_array : _type_
         _description_
     x_tol : _type_
         _description_
     plot_vars : _type_
         _description_
     
-    Intermediate outputs
-    ----------
-    None
+    Function Description
+    -----------
 
-    Returns 
-    ----------
+    Returns
+    -----------
     None
     """    
     eilmer_data = Averaged2DEilmerDataInto1D(eilmer_cell_data_files = eilmer_cell_data_files, \
@@ -1476,9 +1570,8 @@ def generate_1D_volume_averaged_plots_from_eilmer_data(eilmer_cell_data_files, p
         plt.close()
 #####################################################################################
 def generate_1D_area_averaged_plots_from_eilmer_data(eilmer_extract_line_files, plot_vars, n_points, pos_x_array, ymax_array, include_bounding_lines):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
     eilmer_extract_line_files : _type_
         _description_
@@ -1493,12 +1586,11 @@ def generate_1D_area_averaged_plots_from_eilmer_data(eilmer_extract_line_files, 
     include_bounding_lines : _type_
         _description_
     
-    Intermediate outputs
-    ----------
-    None
+    Function Description
+    -----------
 
-    Returns 
-    ----------
+    Returns
+    -----------
     None
     """    
     n_cells = len(pos_x_array)
@@ -1534,9 +1626,8 @@ def generate_1D_area_averaged_plots_from_eilmer_data(eilmer_extract_line_files, 
         plt.close()
 #####################################################################################
 def compare_1D_simulation_to_area_averaged_eilmer_extract(eilmer_extract_line_files, simulation_files, plot_vars, n_points, add_bounding_lines, include_geometry_profile, secondary_1D_files_for_proper_geometry = None, x_scale = 1.0):
-    """_summary_
-
-    Parameters
+    """
+    Arguments
     ----------
     eilmer_extract_line_files : _type_
         _description_
@@ -1553,12 +1644,11 @@ def compare_1D_simulation_to_area_averaged_eilmer_extract(eilmer_extract_line_fi
     secondary_1D_files_for_proper_geometry : _type_
         _description_
 
-    Intermediate outputs
-    ----------
-    None
+    Function Description
+    -----------
 
-    Returns 
-    ----------
+    Returns
+    -----------
     None
     """    
     data_object = None
@@ -1652,12 +1742,11 @@ def compare_fluxes_between_eilmer_slices_and_1D_cell_data(spatial_cell_data_file
     - secondary_1D_files_for_proper_geometry : list(str)
         - List of 1D spatial cell data file names that contain proper geometry values
 
-    Intermediate outputs
-    ----------
-    None
+    Function Description
+    -----------
 
-    Returns 
-    ----------
+    Returns
+    -----------
     None
     """      
     data_object = None
@@ -1751,7 +1840,24 @@ def compare_fluxes_between_eilmer_slices_and_1D_cell_data(spatial_cell_data_file
 ######################################################################################
 def generate_single_spatial_interface_data_plots(spatial_interface_data_file, \
                                         plot_vars, label, include_geometry_profile):
-    """_summary_
+    """
+    Arguments
+    ----------
+    - spatial_cell_data_files : list(str)
+        - File names of DT_1D_V5 spatial cell data files
+    - plot_vars : list(str)
+        - List of fluxes that are wanted to be plotted
+    - include_geometry_profile : bool
+        - Include geometry outline at bottom of plot
+    - secondary_1D_files_for_proper_geometry : list(str)
+        - List of 1D spatial cell data file names that contain proper geometry values
+
+    Function Description
+    -----------
+
+    Returns
+    -----------
+    None
     """
     interface_data_object = ProcessSpatialInterfaceData(spatial_interface_data_file = spatial_interface_data_file)
     interface_data = interface_data_object.interface_data

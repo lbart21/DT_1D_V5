@@ -14,9 +14,10 @@ from Algorithms.DT_1D_V5.models.prefilled_single_inlet_mesh_object \
 
 class SinglePhaseMultiSpeciesFiniteRateReactiveCubicNozzle(SingleInlet1DMeshObject):
     __slots__ = []
-    def __init__(self, n_cells, geometry, init_flow_state, shared_reactor_object, restart_flag, \
-                        flux_scheme, recon_scheme, limiter, recon_props, update_from, \
-                        comp_label, reverse_direction_for_ghost_cells = False) -> None:
+    def __init__(self, n_cells, geometry, init_flow_state, shared_reactor_object, \
+                        restart_flag, flux_scheme, recon_scheme, limiter, \
+                        recon_props, update_from, comp_label, \
+                        reverse_direction_for_ghost_cells = False) -> None:
         super().__init__(n_cells, reverse_direction_for_ghost_cells)
         # geometry = [D_L, D_R, L]
         self.component_labels = [comp_label]
@@ -31,8 +32,8 @@ class SinglePhaseMultiSpeciesFiniteRateReactiveCubicNozzle(SingleInlet1DMeshObje
                                     recon_scheme = recon_scheme, limiter = limiter, \
                                     recon_props = recon_props, update_from = update_from)
 
-    def initialise_cells(self, n_cells, geometry, init_flow_state, shared_reactor_object, \
-                                restart_flag, comp_label):
+    def initialise_cells(self, n_cells, geometry, init_flow_state, \
+                                    shared_reactor_object, restart_flag, comp_label):
         [_, _,  L] = geometry
         for cell in range(n_cells):
             flow_state_object = init_flow_state.__class__
@@ -61,8 +62,9 @@ class SinglePhaseMultiSpeciesFiniteRateReactiveCubicNozzle(SingleInlet1DMeshObje
                 fs.fluid_state.copy_values(init_flow_state.fluid_state)
                 fs.vel_x = init_flow_state.vel_x
             
-            cell_object = SinglePhaseMultiSpeciesFiniteRateReactiveCell(cell_id = cell, \
-                                                                        label = comp_label)
+            cell_object = SinglePhaseMultiSpeciesFiniteRateReactiveCell(\
+                                            cell_id = cell, \
+                                            label = comp_label)
 
             pos_x_w = cell * L / n_cells
             pos_x_c = (cell + 0.5) * L / n_cells
@@ -88,7 +90,7 @@ class SinglePhaseMultiSpeciesFiniteRateReactiveCubicNozzle(SingleInlet1DMeshObje
             self.cell_array[cell] = cell_object                             
 
     def initialise_interfaces(self, n_cells, geometry, init_flow_state, flux_scheme, \
-                                        recon_scheme, limiter, recon_props, update_from):
+                                    recon_scheme, limiter, recon_props, update_from):
         [_, _,  L] = geometry
         for interface in range(n_cells + 1):
             pos_x = interface * L / n_cells

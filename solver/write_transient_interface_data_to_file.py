@@ -4,13 +4,29 @@ Author: Luke Bartholomew
 Edits:
 """
 import os
-def write_transient_interface_data_to_file(interface, time, flow_property_variables, sim_number, simulation_description):
+def write_transient_interface_data_to_file(interface, time, flow_property_variables, \
+                                           sim_number, simulation_description):
+    """
+    Arguments
+    ----------
+    interface : _type_
+        _description_
+    time : _type_
+        _description_
+    flow_property_variables : _type_
+        _description_
+    sim_number : _type_
+        _description_
+    simulation_description : _type_
+        _description_
+    """
     cwd = os.getcwd()
     interface_id = interface.interface_id
     file_name = "Sim" + str(sim_number) + "TransientInterfaceDataForInterfaceID" + str(interface_id) + ".txt"
     if not os.path.exists(cwd + "/data/" + file_name):
         with open(cwd + "/data/" + file_name, "w") as file:
             interface_data = {}
+            interface_data = interface.get_interface_data(flow_property_variables)
             if "A" in flow_property_variables:
                 interface_data["A"] = interface.geo["A"]
             if "mass_flux" in flow_property_variables:

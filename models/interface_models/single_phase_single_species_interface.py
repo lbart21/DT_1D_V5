@@ -205,4 +205,25 @@ class SinglePhaseSingleSpeciesInterface():
                                                 map_interface_id_to_west_cell_idx = map_interface_id_to_west_cell_idx, \
                                                 map_interface_id_to_east_cell_idx = map_interface_id_to_east_cell_idx)
             return
+        
+    def get_interface_data(self, properties):
+        interface_data = {}
+        if "A" in properties:
+            interface_data["A"] = self.geo["A"]
+        if "mass_flux" in properties:
+            interface_data["mass_flux"] = self.boundary_fluxes["mass"]
+        if "energy_flux" in properties:
+                interface_data["energy_flux"] = self.boundary_fluxes["energy"]
+        if "xMom_flux" in properties:
+                interface_data["xMom_flux"] = self.boundary_fluxes["xMom"]
+        if "p" in properties:
+                interface_data["p"] = self.boundary_fluxes["p"]
+        if "Ma" in properties:
+                interface_data["Ma"] = self.boundary_fluxes["Ma"]
+        if "vel_x" in properties:
+                interface_data["vel_x"] = self.boundary_fluxes["vel_x"]
+        if "gamma" in properties:
+                interface_data["gamma"] = self.lft_state.fluid_state.gamma
+        
+        return interface_data
                 
